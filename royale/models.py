@@ -6,11 +6,8 @@ from django.utils import timezone
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
     user_name = models.CharField(max_length=30, unique=True)
-    user_health = models.IntegerField(default=100)
-    user_energy = models.IntegerField(default=0)
-    user_shield = models.IntegerField(default=0)
     user_points = models.IntegerField(default=0)
-    user_class = models.IntegerField(default=0)
+    user_description = models.CharField(max_length=200)
 
     def __str__(self):
         return self.user_name
@@ -18,7 +15,11 @@ class User(models.Model):
 
 class EventParticipation(models.Model):
     participation_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_health = models.IntegerField(default=100)
+    user_energy = models.IntegerField(default=0)
+    user_shield = models.IntegerField(default=0)
+    user_class = models.IntegerField(default=0)
 
 
 class TaskSchedule(models.Model):
@@ -35,7 +36,7 @@ class TaskSchedule(models.Model):
 class TaskSteps(models.Model):
     step_id = models.AutoField(primary_key=True)
     step_name = models.CharField(max_length=30)
-    step_description = models.CharField()
+    step_description = models.CharField(max_length=30)
     step_completed = models.BooleanField(default=False)
 
 
@@ -45,8 +46,8 @@ class Task(models.Model):
     task_description = models.CharField(max_length=200)
     task_repeating = models.BooleanField(default=False)
     task_completion_time = models.DateTimeField()
-    task_weekly_schedule = models.OneToOneField(TaskSchedule)
-    task_steps = models.ForeignKey(TaskSteps)
+    task_weekly_schedule = models.OneToOneField(TaskSchedule, on_delete=models.CASCADE)
+    task_steps = models.ForeignKey(TaskSteps, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.task_name
@@ -58,15 +59,15 @@ class Event(models.Model):
     event_max_points = models.IntegerField(default=0)
     event_is_public = models.BooleanField(default=True)
     event_key = models.CharField(max_length=8)
-    event_participators = models.ForeignKey(EventParticipation)
-    task_list = models.ForeignKey(Task)
+    event_participators = models.ForeignKey(EventParticipation, on_delete=models.CASCADE)
+    task_list = models.ForeignKey(Task, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.event_name
 
 
-class Actions(models.Model):
-    action_id = models.AutoField(primary_key=True)
-    action_type = models.IntegerField()
-    action_performer = models.OneToOneField(User)
-    action_target = models.OneToOneField(User)
+class UserActions(models.Model):
+    user_action_id = models.AutoField(primary_key=True)
+    user_action_type = models.IntegerField(default=0)
+    user_action_performer = models.OneToOneField(User, on_delete=models.CASCADE, related_name='performer')
+    user_action_target = models.OneToOneField(User, on_delete=models.CASCADE)
