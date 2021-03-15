@@ -1,11 +1,12 @@
 import datetime
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 
-class User(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    user_name = models.CharField(max_length=30, unique=True)
+# TODO: Remodel this table to include a 1-1 relationship to the built-in User class
+class Client(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user_points = models.IntegerField(default=0)
     user_description = models.CharField(max_length=200)
 
@@ -15,7 +16,7 @@ class User(models.Model):
 
 class EventParticipation(models.Model):
     participation_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(Client, on_delete=models.CASCADE)
     user_health = models.IntegerField(default=100)
     user_energy = models.IntegerField(default=0)
     user_shield = models.IntegerField(default=0)
@@ -53,6 +54,7 @@ class Task(models.Model):
         return self.task_name
 
 
+# TODO: Add User owner foreign key association
 class Event(models.Model):
     event_id = models.AutoField(primary_key=True)
     event_name = models.CharField(max_length=30)
@@ -69,5 +71,5 @@ class Event(models.Model):
 class UserActions(models.Model):
     user_action_id = models.AutoField(primary_key=True)
     user_action_type = models.IntegerField(default=0)
-    user_action_performer = models.OneToOneField(User, on_delete=models.CASCADE, related_name='performer')
-    user_action_target = models.OneToOneField(User, on_delete=models.CASCADE)
+    user_action_performer = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='performer')
+    user_action_target = models.OneToOneField(Client, on_delete=models.CASCADE)
