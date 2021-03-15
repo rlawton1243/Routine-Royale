@@ -10,9 +10,6 @@ class Client(models.Model):
     user_points = models.IntegerField(default=0)
     user_description = models.CharField(max_length=200)
 
-    def __str__(self):
-        return self.user_name
-
 
 class EventParticipation(models.Model):
     participation_id = models.AutoField(primary_key=True)
