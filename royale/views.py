@@ -6,22 +6,24 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from royale.models import User, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
+from royale.models import Client, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
 
 from rest_framework import viewsets, status
 from rest_framework import permissions
 from rest_framework import generics
 from rest_framework.views import APIView
 
-from royale.serializers import UserSerializer, EventSerializer, TaskSerializer
+from django.contrib.auth.models import User
+
+from royale.serializers import ClientSerializer, EventSerializer, TaskSerializer, UserSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class ClientViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = User.objects.all().order_by('-user_id')
-    serializer_class = UserSerializer
+    queryset = Client.objects.all().order_by('-id')
+    serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
@@ -43,12 +45,18 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class UserView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
-class UserCreateAPIView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class ClientView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+
+
+class ClientCreateAPIView(generics.CreateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
     permission_classes = (AllowAny,)
