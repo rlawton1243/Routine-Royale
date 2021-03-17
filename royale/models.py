@@ -4,7 +4,6 @@ from django.conf import settings
 from django.utils import timezone
 
 
-# TODO: Remodel this table to include a 1-1 relationship to the built-in User class
 class Client(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user_points = models.IntegerField(default=0)
