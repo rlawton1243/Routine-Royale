@@ -2,20 +2,16 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import User, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
+from royale.models import Client, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class ClientSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
-        model = User
-        fields = ['user_id', 'user_name', 'user_points', 'user_description']
-
-    def create(self, validated_data):
-        user = super(UserSerializer, self).create(validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+        model = Client
+        fields = ['user', 'user_points', 'user_description']
 
 
 class EventSerializer(serializers.HyperlinkedModelSerializer):
@@ -31,3 +27,26 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['task_id', 'task_name', 'task_description', 'task_repeating', 'task_completion_time',
                   'task_weekly_schedule', 'task_steps']
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'password',
+            'email',
+        )
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            password = validated_data.pop('password')
+            instance.set_password(password)
+        return super(UserSerializer, self).update(instance, validated_data)
