@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction
 
 from rest_framework import viewsets, status
 from rest_framework import permissions
@@ -31,7 +31,7 @@ class EventViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows Events to be viewed or edited.
     """
-    queryset = Event.objects.all().order_by('-event_id')
+    queryset = Event.objects.all().order_by('-id')
     serializer_class = EventSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -40,7 +40,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows tasks to be viewed or edited.
     """
-    queryset = Task.objects.all().order_by('-task_id')
+    queryset = Task.objects.all().order_by('-id')
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
 

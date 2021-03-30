@@ -1,0 +1,1 @@
+POINTS_SCALE = 10
