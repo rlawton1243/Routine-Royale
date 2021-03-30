@@ -2,7 +2,7 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskSteps, Task, Event, UserActions
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -11,20 +11,19 @@ class ClientSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['user', 'user_points', 'user_description']
+        fields = ['user', 'points', 'description']
 
 
 class EventSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Event
-        fields = ['event_id', 'event_name', 'event_max_points', 'event_is_public', 'event_key', 'event_participators']
+        fields = ['id', 'name', 'is_public', 'owner', 'complete_date']
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Task
-        fields = ['task_id', 'task_name', 'task_description', 'task_repeating', 'task_completion_time',
-                  'task_weekly_schedule', 'task_steps', 'associated_event']
+        fields = ['id', 'name', 'description', 'repeating', 'completion_time', 'event']
 
 
 class UserSerializer(serializers.ModelSerializer):
