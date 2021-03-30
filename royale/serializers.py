@@ -17,15 +17,14 @@ class ClientSerializer(serializers.HyperlinkedModelSerializer):
 class EventSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Event
-        fields = ['event_id', 'event_name', 'event_max_points', 'event_is_public', 'event_key', 'event_participators',
-                  'task_list']
+        fields = ['event_id', 'event_name', 'event_max_points', 'event_is_public', 'event_key', 'event_participators']
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Task
         fields = ['task_id', 'task_name', 'task_description', 'task_repeating', 'task_completion_time',
-                  'task_weekly_schedule', 'task_steps']
+                  'task_weekly_schedule', 'task_steps', 'associated_event']
 
 
 class UserSerializer(serializers.ModelSerializer):
