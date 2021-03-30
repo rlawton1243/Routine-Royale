@@ -1,16 +1,103 @@
 #:kivy 2.0.0
+#: import SlideTransition kivy.uix.screenmanager.SlideTransition
 
+#RoutineLogin connects to RoutineCreate and RoutineMain, this is the main login screen for a created account
 <RoutineLogin>
-    AnchorLayout:
-        size: root.width, root.height
+
+    FloatLayout:
 
         Label:
             id: userPrompt
             text: 'Username: '
-            anchor_x: 'left'
-            anchor_y: 'top'
+            size_hint: 0.5, 0.5
+            pos_hint: {"left":0, "top":1}
 
-            #TODO: All of this please
+        Label:
+            id: passPrompt
+            text: 'Password: '
+            size_hint: 0.5, 0.5
+            pos_hint: {"left":0, "top":0.75}
+
+        Button:
+            id: createAccount
+            text: 'Create Account'
+            size_hint: 0.5, 0.2
+            pos_hint: {"left":0, "top":0.35}
+            on_press: app.root.transition = SlideTransition(direction='left')
+            on_release: root.manager.current = 'create'
+
+        Button:
+            id: accountLogin
+            text: 'Login'
+            size_hint: 0.5, 0.2
+            pos_hint: {"right":1, "top":0.35}
+            on_press: print('test login'), print(userInput.text), print(passInput.text)
 
 
+        TextInput:
+            id: userInput
+            size_hint: 0.5, 0.1
+            pos_hint: {"right":1, "top":0.8}
+
+
+        TextInput:
+            id: passInput
+            size_hint: 0.5, 0.1
+            pos_hint: {"right":1, "top":0.55}
+            password: True
+
+
+#RoutineCreate connects to RoutineLogin, this allows the user to create a new account
 <RoutineCreate>
+
+    FloatLayout:
+
+        Label:
+            id: userPrompt
+            text: 'Username: '
+            size_hint: 0.5, 0.5
+            pos_hint: {"left":0, "top":1}
+
+        Label:
+            id: passPrompt
+            text: 'Password: '
+            size_hint: 0.5, 0.5
+            pos_hint: {"left":0, "top":0.75}
+
+        Button:
+            id: createAccount
+            text: 'Return to login'
+            size_hint: 0.5, 0.2
+            pos_hint: {"left":0, "top":0.35}
+            on_press: app.root.transition = SlideTransition(direction='right')
+            on_release: root.manager.current = 'login'
+
+        Button:
+            id: accountLogin
+            text: 'Create Account'
+            size_hint: 0.5, 0.2
+            pos_hint: {"right":1, "top":0.35}
+            on_press:
+                root.CreateAccount(userInput, passInput)
+
+        TextInput:
+            id: userInput
+            size_hint: 0.5, 0.1
+            pos_hint: {"right":1, "top":0.8}
+
+
+        TextInput:
+            id: passInput
+            size_hint: 0.5, 0.1
+            pos_hint: {"right":1, "top":0.55}
+            password: True
+
+
+#RoutineMain connects to RoutineLogin, RoutineAccount, RoutineEvents, and RoutineEventSearch. This is the hub to go to
+#each screen of the main app
+<RoutineMain>
+
+    FloatLayout:
+
+        Label:
+            test: 'test main'
