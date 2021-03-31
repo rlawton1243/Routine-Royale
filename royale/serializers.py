@@ -17,7 +17,13 @@ class ClientSerializer(serializers.HyperlinkedModelSerializer):
 class EventSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'name', 'is_public', 'owner', 'complete_date']
+        fields = ['id', 'name', 'is_public', 'owner', 'end_date']
+
+
+class MultiEventSerializer(serializers.Serializer):
+
+    def __init(self, events):
+        self.events = events
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
