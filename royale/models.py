@@ -104,7 +104,7 @@ class Event(models.Model):
     name = models.CharField(max_length=30)
     is_public = models.BooleanField(default=True)
     owner = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
-    complete_date = models.DateTimeField(default=datetime.now, blank=True)
+    end_date = models.DateTimeField(default=datetime.now, blank=True)
 
     @property
     def event_max_points(self):
