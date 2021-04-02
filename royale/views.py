@@ -60,3 +60,15 @@ class ClientCreateAPIView(generics.CreateAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = (AllowAny,)
+
+
+@api_view(['POST', 'GET'])
+def join_event(request):
+    """
+    Creates EventParticipation based on Authenticated User and Provided Details
+    """
+    if request.method == "GET":
+        return Response({
+            "message": "Hello, world!"
+        })
+
