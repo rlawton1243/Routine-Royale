@@ -18,16 +18,8 @@ class RoutineCreate(Screen):
     pass
 
     def CreateAccount(self, username, password):
-        s = NetworkManager.login(self)
-        if 'csrftoken' in s.cookies:
-            # Django 1.6 and up
-            csrftoken = s.cookies['csrftoken']
-        else:
-            # older versions
-            csrftoken = s.cookies['csrf']
-        userID = NetworkManager.addUser(self, username, password, csrftoken, s)
-        NetworkManager.addClient(self, userID, csrftoken, s)
-        return
+        userID = self.manager.session.addUser(username, password, self.manager.session.csrftoken)
+        self.s.addClient(userID, self.manager.session.csrftoken)
 
 
 class RoutineMain(Screen):
@@ -79,6 +71,19 @@ class NetworkManager:
     def __init__(self):
         self.s = None
         self.csrftoken = None
+        self.cookies = None
+        self.logged_in = False
+
+    def post(self, url, payload):
+        """
+        POSTs using the connection appending CSRF if exists
+        :param url: str URL to POST to
+        :param payload: Dictionary
+        :return: Response
+        """
+        if self.csrftoken:
+            payload['csrfmiddlewaretoken'] = self.csrftoken
+        return self.s.post(_url(url), data=payload)
 
     def addClient(self, userID, csrftoken, s, points=0, desc='placeholder'):
         headers = {
@@ -93,7 +98,7 @@ class NetworkManager:
         }, headers=headers)
         return r
 
-    def addUser(self, username, password, csrftoken, s):
+    def addUser(self, username, password, csrftoken):
         headers = {
             'X-CSRFToken': csrftoken,
             'Referer': '/'
