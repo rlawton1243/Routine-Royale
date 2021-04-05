@@ -1,11 +1,32 @@
 from django.contrib import admin
 
-from .models import Client, UserActions, Task, TaskSteps, TaskSchedule, Event, EventParticipation
+from .models import Client, Clazz, Event, EventParticipation, Task, TaskStep, TaskSchedule, UserAction
 
 admin.site.register(Client)
-admin.site.register(UserActions)
-admin.site.register(Task)
-admin.site.register(TaskSteps)
+admin.site.register(UserAction)
+admin.site.register(TaskStep)
 admin.site.register(TaskSchedule)
-admin.site.register(Event)
 admin.site.register(EventParticipation)
+admin.site.register(Clazz)
+
+
+class TaskStepAdminInline(admin.TabularInline):
+    model = TaskStep
+    extra = 0
+
+
+class TaskAdminInline(admin.TabularInline):
+    model = Task
+    extra = 0
+
+
+class TaskAdmin(admin.ModelAdmin):
+    inlines = (TaskStepAdminInline, )
+
+
+class EventAdmin(admin.ModelAdmin):
+    inlines = (TaskAdminInline,)
+
+
+admin.site.register(Task, TaskAdmin)
+admin.site.register(Event, EventAdmin)

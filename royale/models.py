@@ -1,90 +1,150 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
-
-
-class Client(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    user_points = models.IntegerField(default=0)
-    user_description = models.CharField(max_length=200, blank=True)
-
-    def __str__(self):
-        return self.user.username
+import random
+from datetime import datetime
+import constants
 
 
 class EventParticipation(models.Model):
-    participation_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(Client, on_delete=models.CASCADE)
-    user_health = models.IntegerField(default=100)
-    user_energy = models.IntegerField(default=0)
-    user_shield = models.IntegerField(default=0)
-    user_class = models.IntegerField(default=0)
+    """
+    Defines a Client participation in an Event.
+    """
+
+    id = models.AutoField(primary_key=True)
+    client = models.ForeignKey('Client', on_delete=models.CASCADE)
+    health = models.IntegerField(default=100)
+    energy = models.IntegerField(default=0)
+    shield = models.IntegerField(default=0)
+    event = models.ForeignKey('Event', on_delete=models.CASCADE)
+    selected_class = models.ForeignKey('Clazz', default=1, on_delete=models.SET_DEFAULT)
+    completed_tasks = models.ManyToManyField('Task')
+    completed_steps = models.ManyToManyField('TaskStep')
+    total_completed = models.IntegerField(default=0)
+    streak = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.user_id} -> {self.participation_id}"
+        return f"{str(self.client)} -> {str(self.event)}"
 
 
-class TaskSteps(models.Model):
-    step_id = models.AutoField(primary_key=True)
-    step_name = models.CharField(max_length=30)
-    step_description = models.CharField(max_length=30, blank=True)
-    step_completed = models.BooleanField(default=False)
+class Clazz(models.Model):
+    """
+    Defines selectable/purchasable Class (i.e. Health and DMG)
+    """
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30, blank=False)
+    description = models.CharField(max_length=150)
+    health = models.IntegerField(default=100)
+    damage = models.IntegerField(default=10)
 
     def __str__(self):
-        return f"{self.step_name}({self.step_id})"
+        return f"{self.name} (H:{self.health}, D:{self.damage})"
+
+
+class Client(models.Model):
+    """
+    Defines a RR client, relating to the Django auth backend.
+    """
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    points = models.IntegerField(default=0)
+    description = models.CharField(max_length=200, blank=True)
+    owned_classes = models.ManyToManyField(Clazz, blank=True)
+
+    def __str__(self):
+        self.user: User
+        return self.user.username
+
+
+class TaskStep(models.Model):
+    """
+    Defines a step as part of a Task.
+    """
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    description = models.CharField(max_length=30, blank=True)
+    task = models.ForeignKey('Task', on_delete=models.CASCADE, blank=True, null=True)
+
+    def __str__(self):
+        return f"{str(self.task)}: {self.name}"
 
 
 class TaskSchedule(models.Model):
-    schedule_id = models.AutoField(primary_key=True)
-    scheduled_on_monday = models.BooleanField(default=False)
-    scheduled_on_tuesday = models.BooleanField(default=False)
-    scheduled_on_wednesday = models.BooleanField(default=False)
-    scheduled_on_thursday = models.BooleanField(default=False)
-    scheduled_on_friday = models.BooleanField(default=False)
-    scheduled_on_saturday = models.BooleanField(default=False)
-    scheduled_on_sunday = models.BooleanField(default=False)
+    """
+    Defines a task's Schedule
+    """
+
+    id = models.AutoField(primary_key=True)
+    monday = models.BooleanField(default=False)
+    tuesday = models.BooleanField(default=False)
+    wednesday = models.BooleanField(default=False)
+    thursday = models.BooleanField(default=False)
+    friday = models.BooleanField(default=False)
+    saturday = models.BooleanField(default=False)
+    sunday = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.schedule_id}: ' \
-               f'{"0" if self.scheduled_on_sunday else "1"}, ' \
-               f'{"0" if self.scheduled_on_monday else "1"}, ' \
-               f'{"0" if self.scheduled_on_tuesday else "1"}, ' \
-               f'{"0" if self.scheduled_on_wednesday else "1"}, ' \
-               f'{"0" if self.scheduled_on_thursday else "1"}, ' \
-               f'{"0" if self.scheduled_on_friday else "1"}, ' \
-               f'{"0" if self.scheduled_on_saturday else "1"}'
+        return f'{"U" if self.sunday else ""}' \
+               f'{"M" if self.monday else ""}' \
+               f'{"T" if self.tuesday else ""}' \
+               f'{"W" if self.wednesday else ""}' \
+               f'{"R" if self.thursday else ""}' \
+               f'{"F" if self.friday else ""}' \
+               f'{"S" if self.saturday else ""}'
 
 
-# TODO: Add create_key function that combines event_id with a hash of name to be unique
 class Event(models.Model):
-    event_id = models.AutoField(primary_key=True)
-    event_name = models.CharField(max_length=30)
-    event_max_points = models.IntegerField(default=0)
-    event_is_public = models.BooleanField(default=True)
-    event_key = models.CharField(max_length=8, unique=True)
-    event_participators = models.ForeignKey(EventParticipation, on_delete=models.CASCADE)
-    event_owner = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
+    """
+    Defines an Event containing Tasks, with participating Users.
+    """
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    is_public = models.BooleanField(default=True)
+    owner = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
+    end_date = models.DateTimeField(default=datetime.now, blank=True)
+
+    @property
+    def event_max_points(self):
+        return Event.objects.get(pk=self.id).eventparticipation_set.all().count() * constants.POINTS_SCALE
+
+    @property
+    def event_key(self):
+        return f'{self.id}-{random.randrange(100000, 999999)}'
 
     def __str__(self):
-        return f"{self.event_name}({self.event_key})"
+        return f"{self.name} ({self.event_key})"
 
 
 class Task(models.Model):
-    task_id = models.AutoField(primary_key=True)
-    task_name = models.CharField(max_length=30)
-    task_description = models.CharField(max_length=200, blank=True)
-    task_repeating = models.BooleanField(default=False)
-    task_completion_time = models.DateTimeField(blank=True)
-    task_weekly_schedule = models.ForeignKey(TaskSchedule, on_delete=models.CASCADE, null=True)
-    task_steps = models.ForeignKey(TaskSteps, on_delete=models.CASCADE, blank=True, null=True)
-    associated_event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    """
+    Defines a Task as part of an Event.
+    """
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    description = models.CharField(max_length=200, blank=True)
+    repeating = models.BooleanField(default=False)
+    schedule = models.ForeignKey(TaskSchedule, null=True, blank=True, on_delete=models.SET_NULL)
+    due_time = models.DateTimeField(blank=True)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.task_name}({self.task_id})"
+        return f"{str(self.event)}: {self.name}"
 
 
-class UserActions(models.Model):
-    user_action_id = models.AutoField(primary_key=True)
-    user_action_type = models.IntegerField(default=0)
-    user_action_performer = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='performer')
-    user_action_target = models.OneToOneField(Client, on_delete=models.CASCADE)
+class UserAction(models.Model):
+    """
+    Defines a User Action (daily) as part of an Event.
+    """
+
+    id = models.AutoField(primary_key=True)
+    action_type = models.IntegerField(default=0)
+    performer = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='performer')
+    target = models.OneToOneField(Client, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{str(self.performer)} -({str(self.action_type)})-> {str(self.target)}"
