@@ -1,25 +1,28 @@
 import kivy
 import requests
+import json
 
 kivy.require('2.0.0')
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 
+SERVICE_URL = 'http://127.0.0.1:8000'
+_url = lambda ext: SERVICE_URL + ext
+
 
 class RoutineLogin(Screen):
 
     def LoginAccount(self, username, password):
         self.manager.session.login(username, password)
-        self.manager.session.join_event()
         self.manager.current = 'main'
 
 
 class RoutineCreate(Screen):
 
     def CreateAccount(self, username, password):
-        userID = self.manager.session.addUser(username, password, self.manager.session.csrftoken)
-        self.s.addClient(userID, self.manager.session.csrftoken)
+        userID = self.manager.session.add_user(username, password, self.manager.session.csrftoken)
+        self.s.add_client(userID, self.manager.session.csrftoken)
 
 
 class RoutineMain(Screen):
@@ -65,18 +68,19 @@ class RoutineHome(App):
 
 
 # TODO: Finalize NetworkManager
-
-def _url(path):
-    return 'http://127.0.0.1:8000' + path
-
-
 class NetworkManager:
 
     def __init__(self):
         self.s = None
-        self.csrftoken = None
-        self.cookies = None
         self.logged_in = False
+
+    @property
+    def csrf(self):
+        """
+        Gets changing CSRF token from session.
+        :return: Current CSRF token
+        """
+        return self.s.cookies['csrftoken']
 
     def post(self, url, payload):
         """
@@ -85,57 +89,83 @@ class NetworkManager:
         :param payload: Dictionary
         :return: Response
         """
-        if self.csrftoken:
-            payload['csrfmiddlewaretoken'] = self.csrftoken
-        return self.s.post(_url(url), data=payload)
-
-    def addClient(self, userID, csrftoken, points=0, desc='placeholder'):
         headers = {
-            'X-CSRFToken': csrftoken,
-            'Referer': '/'
+                'X-CSRFToken': self.csrf,
+                'Referer':     '/'
         }
-        r = self.s.post(_url('/clients/'), data={
-            'user': f'{_url("/users/")}{userID}/',
-            'user_points': points,
-            'user_description': desc,
-            'next': '/'
-        }, headers=headers)
-        return r
+        return self.s.post(_url(url), data=payload, headers=headers)
 
-    def addUser(self, username, password, csrftoken):
-        headers = {
-            'X-CSRFToken': csrftoken,
-            'Referer': '/'
-        }
-        x = self.s.post(_url('/users/'), data={
-            'username': username.text,
-            'password': password.text,
-            'next': '/'
-        }, headers=headers)
-        return x.json()['id']
+    def get(self, url, json_decode=False):
+        """
+        GETs using current connection.
+        :param url: str URL to GET
+        :param json_decode: Decode JSON
+        :return: Response
+        """
+        if not json_decode:
+            return self.s.get(_url(url))
+        else:
+            response = self.get(url)
+            if 200 <= response.status_code <= 299:
+                try:
+                    return json.loads(response.content)
+                except Exception as e:
+                    raise IOError(f"Invalid JSON {response.content} ({response.status_code})  ({e})")
+            else:
+                raise IOError(f"GET response was unexpected at {url}: {response.status_code} : {response.content}")
+
+    def get_values(self, url, values: list):
+        """
+        GETS using current connection, looking for specific variables.
+        :param url: str URL to GET
+        :param values: List of Variables to fetch
+        :return: Dictionary of Requested Variables (if found, else None)
+        """
+        response = self.get(url, json_decode=True)
+        response: dict
+        result = {}
+        for item in values:
+            if item in response.keys():
+                result[item] = response[item]
+        return result
 
     def login(self, username, password):
-        with requests.Session() as login_session:
-            login_session.get('http://127.0.0.1:8000/api-auth/login/')
-            if 'csrftoken' in login_session.cookies:
-                # Django 1.6 and up
-                self.csrftoken = login_session.cookies['csrftoken']
-            else:
-                # older versions
-                self.csrftoken = login_session.cookies['csrf']
-            payload = {
+        login_session = requests.Session()
+        self.s = login_session
+        login_session.get('http://127.0.0.1:8000/api-auth/login/')
+
+        payload = {
                 'username': username,
                 'password': password,
-                'csrfmiddlewaretoken': self.csrftoken,
-                'next': '/'
-            }
+        }
 
-            response = login_session.post(_url("/api-auth/login/"), data=payload)
-            # print(response)
-            self.s = login_session
+        self.post("/api-auth/login/", payload)
+
+        response = self.get('/test_login/')
+        if response.status_code == 200:
             self.logged_in = True
+        else:
+            self.logged_in = False
+            print(f"Error Logging in: {response.status_code} {response.content}")
 
-    def join_event(self, event_id=1, class_id=1):
+    def add_client(self, userID, points=0, desc='placeholder'):
+        payload = {
+                'user':             {userID},
+                'user_points':      points,
+                'user_description': desc,
+        }
+
+        return self.post('/clients/', payload)
+
+    def add_user(self, username, password):
+        payload = {
+                'username': username.text,
+                'password': password.text,
+        }
+
+        return self.post('/users', payload)['id']
+
+    def join_event(self, event_id, class_id):
         """
         Joins authenticated user to an Event using API call
         :param event_id: PK for Event to join
@@ -143,12 +173,10 @@ class NetworkManager:
         :return: None
         """
         payload = {
-            'event': event_id,
-            'class': class_id,
-            'csrfmiddlewaretoken': self.csrftoken,
-            'next': '/'
+                'event': event_id,
+                'class': class_id,
         }
-        response = self.s.post(_url('/events/join_user/'), data=payload)
+        response = self.post('/events/join_user/', payload)
         print(response)
 
 

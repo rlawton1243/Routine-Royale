@@ -4,7 +4,7 @@ https://www.django-rest-framework.org/tutorial/3-class-based-views/
 https://stackoverflow.com/questions/21508982/add-custom-route-to-viewsets-modelviewset
 """
 from django.http import Http404, HttpResponse
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -52,7 +52,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def join_user(self, request):
         try:
-            client = Client.objects.filter(user=request.user.id)
+            client = Client.objects.filter(user=request.user.id)[0]
             event = Event.objects.get(id=request.data['event'])
             clazz = Clazz.objects.get(id=request.data['class'])
             req = EventParticipation(client=client, event=event, selected_class=clazz, health=clazz.health)
@@ -102,14 +102,17 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny, )
 
 
-
-@api_view(['POST', 'GET'])
-def join_event(request):
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def test_login(request):
     """
     Creates EventParticipation based on Authenticated User and Provided Details
     """
     if request.method == "GET":
         return Response({
-            "message": "Hello, world!"
+                "success": "Logged in!"
         })
-
+    if request.method == "POST":
+        return Response({
+                "hi": "post worked"
+        })
