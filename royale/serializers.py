@@ -19,6 +19,12 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = ['id', 'name', 'is_public', 'owner', 'end_date']
 
+class EventParticipationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventParticipation
+        fields = ['id', 'client', 'health', 'energy', 'shield', 'event', 'selected_class', 'completed_tasks',
+                  'completed_steps', 'total_completed', 'streak']
+
 
 class MultiEventSerializer(serializers.Serializer):
 

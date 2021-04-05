@@ -9,7 +9,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, Clazz
 
 from rest_framework import viewsets, status, renderers
 from rest_framework import permissions
@@ -19,7 +19,8 @@ from rest_framework.views import APIView
 
 from django.contrib.auth.models import User
 
-from royale.serializers import ClientSerializer, EventSerializer, TaskSerializer, UserSerializer
+from royale.serializers import ClientSerializer, EventSerializer, TaskSerializer, UserSerializer, \
+    EventParticipationSerializer
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -48,6 +49,19 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = EventSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def join_user(self, request):
+        try:
+            client = Client.objects.filter(user=request.user.id)
+            event = Event.objects.get(id=request.data['event'])
+            clazz = Clazz.objects.get(id=request.data['class'])
+            req = EventParticipation(client=client, event=event, selected_class=clazz, health=clazz.health)
+            req.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            print(e)
+            return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     """
@@ -57,6 +71,12 @@ class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all().order_by('-id')
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def owned(self, request):
+        qs = Task.objects.filter(event__eventparticipation__client__user=request.user).order_by('-id')
+        serializer = TaskSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -78,12 +98,8 @@ class ClientCreateAPIView(generics.CreateAPIView):
 
 class EventParticipationViewSet(viewsets.ModelViewSet):
     queryset = EventParticipation.objects.all()
-    #serializer_class = EventParticipationSerializer
+    serializer_class = EventParticipationSerializer
     permission_classes = (AllowAny, )
-
-    @action(methods=['post'], detail=True)
-    def join_event(self, request, pk=None):
-        pass
 
 
 
