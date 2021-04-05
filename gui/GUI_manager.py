@@ -8,26 +8,18 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 
 
 class RoutineLogin(Screen):
-    pass
 
     def LoginAccount(self, username, password):
-        return
+        self.manager.session.login(username, password)
+        self.manager.session.join_event()
+        self.manager.current = 'main'
 
 
 class RoutineCreate(Screen):
-    pass
 
     def CreateAccount(self, username, password):
-        s = NetworkManager.login(self)
-        if 'csrftoken' in s.cookies:
-            # Django 1.6 and up
-            csrftoken = s.cookies['csrftoken']
-        else:
-            # older versions
-            csrftoken = s.cookies['csrf']
-        userID = NetworkManager.addUser(self, username, password, csrftoken, s)
-        NetworkManager.addClient(self, userID, csrftoken, s)
-        return
+        userID = self.manager.session.addUser(username, password, self.manager.session.csrftoken)
+        self.s.addClient(userID, self.manager.session.csrftoken)
 
 
 class RoutineMain(Screen):
@@ -55,9 +47,13 @@ class EventSearch(Screen):
 
 class RoutineHome(App):
 
+    def __init__(self, **kwargs):
+        App.__init__(self)
+
     def build(self):
-        self.title = 'Routine Royale!'
+        self.title = 'Routine Royale'
         sm = ScreenManager()
+        sm.session = NetworkManager()
         sm.add_widget(RoutineLogin(name='login'))
         sm.add_widget(RoutineCreate(name='create'))
         sm.add_widget(RoutineMain(name='main'))
@@ -79,13 +75,26 @@ class NetworkManager:
     def __init__(self):
         self.s = None
         self.csrftoken = None
+        self.cookies = None
+        self.logged_in = False
 
-    def addClient(self, userID, csrftoken, s, points=0, desc='placeholder'):
+    def post(self, url, payload):
+        """
+        POSTs using the connection appending CSRF if exists
+        :param url: str URL to POST to
+        :param payload: Dictionary
+        :return: Response
+        """
+        if self.csrftoken:
+            payload['csrfmiddlewaretoken'] = self.csrftoken
+        return self.s.post(_url(url), data=payload)
+
+    def addClient(self, userID, csrftoken, points=0, desc='placeholder'):
         headers = {
             'X-CSRFToken': csrftoken,
             'Referer': '/'
         }
-        r = s.post(_url('/clients/'), data={
+        r = self.s.post(_url('/clients/'), data={
             'user': f'{_url("/users/")}{userID}/',
             'user_points': points,
             'user_description': desc,
@@ -93,36 +102,54 @@ class NetworkManager:
         }, headers=headers)
         return r
 
-    def addUser(self, username, password, csrftoken, s):
+    def addUser(self, username, password, csrftoken):
         headers = {
             'X-CSRFToken': csrftoken,
             'Referer': '/'
         }
-        x = s.post(_url('/users/'), data={
+        x = self.s.post(_url('/users/'), data={
             'username': username.text,
             'password': password.text,
             'next': '/'
         }, headers=headers)
         return x.json()['id']
 
-    def login(self):
-        with requests.Session() as s:
-            self.s.get('http://127.0.0.1:8000/api-auth/login/')
-            if 'csrftoken' in s.cookies:
+    def login(self, username, password):
+        with requests.Session() as login_session:
+            login_session.get('http://127.0.0.1:8000/api-auth/login/')
+            if 'csrftoken' in login_session.cookies:
                 # Django 1.6 and up
-                self.csrftoken = s.cookies['csrftoken']
+                self.csrftoken = login_session.cookies['csrftoken']
             else:
                 # older versions
-                self.csrftoken = s.cookies['csrf']
+                self.csrftoken = login_session.cookies['csrf']
             payload = {
-                'username': 'ryan',
-                'password': '1234',
+                'username': username,
+                'password': password,
                 'csrfmiddlewaretoken': self.csrftoken,
                 'next': '/'
             }
 
-            s.post(_url("/api-auth/login/"), data=payload)
-            return s
+            response = login_session.post(_url("/api-auth/login/"), data=payload)
+            # print(response)
+            self.s = login_session
+            self.logged_in = True
+
+    def join_event(self, event_id=1, class_id=1):
+        """
+        Joins authenticated user to an Event using API call
+        :param event_id: PK for Event to join
+        :param class_id: PK for selected class (User must own)
+        :return: None
+        """
+        payload = {
+            'event': event_id,
+            'class': class_id,
+            'csrfmiddlewaretoken': self.csrftoken,
+            'next': '/'
+        }
+        response = self.s.post(_url('/events/join_user/'), data=payload)
+        print(response)
 
 
 if __name__ == "__main__":

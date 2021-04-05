@@ -41,10 +41,8 @@
             text: 'Login'
             size_hint: 0.5, 0.1
             pos_hint: {"right":1, "top":0.35}
-            on_press:
-                app.root.transition = FadeTransition()
-                print('test login'), print(userInput.text), print(passInput.text)
-            on_release: root.manager.current = 'main'
+            on_press: app.root.transition = FadeTransition()
+            on_release: root.LoginAccount(userInput.text, passInput.text)
 
 
         TextInput:
