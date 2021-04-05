@@ -31,6 +31,43 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def classes(self, request):
+        """
+        Get all Client owned Classes.
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        pass
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def delete(self, request):
+        """
+        Delete Client and associated Django user
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        pass
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def change_password(self, request):
+        """
+        Change Django Auth password.
+        TODO: May need existing Django password?
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        pass
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def change_email(self, request):
+        """
+        Change Django Auth e-mail.
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        pass
+
 
 class EventViewSet(viewsets.ModelViewSet):
     """
@@ -42,6 +79,8 @@ class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    # TODO: Override Delete
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def public(self, request):
@@ -62,6 +101,15 @@ class EventViewSet(viewsets.ModelViewSet):
             print(e)
             return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug
 
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def details(self, request):
+        """
+        Provides Registered Users, Event Task List, Start and End Date, Top 5 Users sorted on Points
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        pass
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     """
@@ -73,10 +121,38 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
-    def owned(self, request):
+    def all(self, request):
+        """
+        Returns all User's relevant tasks
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
         qs = Task.objects.filter(event__eventparticipation__client__user=request.user).order_by('-id')
         serializer = TaskSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
+
+    def remaining(self, request):
+        """
+        Returns tasks the User has not yet completed
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        pass
+
+    def complete(self, request):
+        """
+        Completes a Task for a User.
+        Must see if the time is before the due time!
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+
+    def steps(self):
+        """
+        Gets Steps as part of a Task
+        :return: HTTP Response
+        """
+        # TODO: Step Serializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
