@@ -15,7 +15,6 @@ class RoutineLogin(Screen):
 
     def LoginAccount(self, username, password):
         self.manager.session.login(username, password)
-        print(self.manager.session.get_values('/events/', []))
         self.manager.current = 'main'
 
 
