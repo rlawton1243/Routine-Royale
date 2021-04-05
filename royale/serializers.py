@@ -7,14 +7,14 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 
 
-class ClientSerializer(serializers.HyperlinkedModelSerializer):
+class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
         fields = ['user', 'points', 'description']
 
 
-class EventSerializer(serializers.HyperlinkedModelSerializer):
+class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ['id', 'name', 'is_public', 'owner', 'end_date']
@@ -26,10 +26,10 @@ class MultiEventSerializer(serializers.Serializer):
         self.events = events
 
 
-class TaskSerializer(serializers.HyperlinkedModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['id', 'name', 'description', 'repeating', 'completion_time', 'event']
+        fields = ['id', 'name', 'description', 'repeating', 'due_time', 'event', 'schedule']
 
 
 class UserSerializer(serializers.ModelSerializer):
