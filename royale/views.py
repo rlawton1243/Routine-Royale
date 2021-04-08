@@ -186,7 +186,7 @@ def test_login(request):
     """
     if request.method == "GET":
         return Response({
-                "success": "Logged in!"
+                "user": f"{request.user.id}"
         })
     if request.method == "POST":
         return Response({
