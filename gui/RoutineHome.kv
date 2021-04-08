@@ -1,7 +1,7 @@
 #:kivy 2.0.0
 #: import SlideTransition kivy.uix.screenmanager.SlideTransition
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
-
+#: import Animation kivy.animation.Animation
 
 #TODO: Implement all API calls
 
@@ -42,8 +42,7 @@
             size_hint: 0.5, 0.1
             pos_hint: {"right":1, "top":0.35}
             on_press: app.root.transition = FadeTransition()
-            on_release: root.LoginAccount(userInput.text, passInput.text)
-
+            on_release: if root.LoginAccount(userInput.text, passInput.text) == True: root.manager.current = 'main'
 
         TextInput:
             id: userInput
@@ -146,7 +145,9 @@
             text: 'Account information'
             size_hint: 0.3, 0.1
             pos_hint: {"right":1, "top": 1}
-            on_press: app.root.transition = SlideTransition(direction='down')
+            on_press:
+                root.shared.account.update_username()
+                app.root.transition = SlideTransition(direction='down')
             on_release: root.manager.current = 'accountInfo'
 
         Button:
@@ -175,6 +176,7 @@
 
 #Allows the user to view and edit their account information
 <AccountInfo>
+    userField: userField
 
     FloatLayout:
 
@@ -182,6 +184,11 @@
             text: 'Account Information'
             size_hint: 0.5, 0.2
             pos_hint: {"right":0.75, "top":1}
+
+        Label:
+            id: userField
+            size_hint: 0.5, 0.2
+            pos_hint: {"right":1, "top":0.8}
 
         Label:
             text: 'Username:'
