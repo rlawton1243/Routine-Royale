@@ -8,7 +8,8 @@ class Shared:
         self.account = None
         self.user_events = None
         self.event_create = None
-        self.event_search = None
+        self.public_event_search = None
+        self.private_event_search = None
         self.app = None
         self.sm = None
         self.nm = None

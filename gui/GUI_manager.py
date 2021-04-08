@@ -6,6 +6,9 @@ kivy.require('2.0.0')
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
 from shared import Shared
 
 
@@ -52,7 +55,29 @@ class EventCreation(Screen):
 class EventSearch(Screen):
     pass
 
-    def SearchDB(self):
+    def list_public_events(self):
+        events = self.shared.nm.get('/events/', True)
+        for event in events['results']:
+            if event['is_public']:
+                self.public_event_widget(event)
+            print(event)
+
+    def public_event_widget(self, event):
+        print(event['id'])
+        w = Widget
+        return
+
+    def join_public_event(self, eventID, classID=1):
+        return
+
+
+class PrivateEventSearch(Screen):
+    def __init__(self, shared: Shared, **kwargs):
+        self.shared = shared
+        Screen.__init__(self, **kwargs)
+
+    def find_private_event(self, event_id):
+        print(event_id)
         return
 
 
@@ -74,7 +99,8 @@ class RoutineHome(App):
             AccountInfo(shared=self.shared, name='accountInfo'),
             UserEvents(shared=self.shared, name='userEvents'),
             EventCreation(shared=self.shared, name='eventCreation'),
-            EventSearch(shared=self.shared, name='eventSearch')
+            PublicEventSearch(shared=self.shared, name='publicEventSearch'),
+            PrivateEventSearch(shared=self.shared, name='privateEventSearch')
         ]
         for widget in widgets:
             sm.add_widget(widget)
@@ -86,7 +112,8 @@ class RoutineHome(App):
         self.shared.account = widgets[3]
         self.shared.user_events = widgets[4]
         self.shared.event_create = widgets[5]
-        self.shared.event_search = widgets[6]
+        self.shared.public_event_search = widgets[6]
+        self.shared.private_event_search = widgets[7]
         return sm
 
 
