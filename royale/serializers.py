@@ -2,22 +2,25 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, Clazz
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
 
+class ClazzSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clazz
+        fields = ['id', 'name', 'description', 'health', 'damage']
+
+
 class ClientSerializer(serializers.ModelSerializer):
+    owned_classes = ClazzSerializer(many=True)
+    email = serializers.CharField(source="user.email", read_only=True)
 
     class Meta:
         model = Client
-        fields = ['user', 'points', 'description']
+        fields = ['id', 'user', 'email', 'points', 'description', 'owned_classes']
 
-
-class EventSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Event
-        fields = ['id', 'name', 'is_public', 'owner', 'end_date']
 
 class EventParticipationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,26 +29,65 @@ class EventParticipationSerializer(serializers.ModelSerializer):
                   'completed_steps', 'total_completed', 'streak']
 
 
-class MultiEventSerializer(serializers.Serializer):
+class SimpleEventParticipationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventParticipation
+        fields = ['id', 'client']
 
-    def __init(self, events):
-        self.events = events
+
+class TaskScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskSchedule
+        fields = ['id', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+
+class TaskStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskStep
+        fields = ['id', 'name', 'description', 'task']
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    class ScheduleField(serializers.Field):
+
+        def to_representation(self, value):
+            return str(value)
+
+        def to_internal_value(self, data):
+            t = TaskSchedule()
+            t.sunday = 'U' in data
+            t.monday = 'M' in data
+            t.tuesday = 'T' in data
+            t.wednesday = 'W' in data
+            t.thursday = 'R' in data
+            t.friday = 'F' in data
+            t.saturday = 'S' in data
+
+    schedule = ScheduleField()
+    steps = TaskStepSerializer(source='taskstep_set', many=True)
+
     class Meta:
         model = Task
-        fields = ['id', 'name', 'description', 'repeating', 'due_time', 'event', 'schedule']
+        fields = ['id', 'name', 'description', 'repeating', 'due_time', 'event', 'schedule', 'steps']
+
+
+class EventSerializer(serializers.ModelSerializer):
+    participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True)
+    task_list = TaskSerializer(source='task_set', many=True)
+
+    class Meta:
+        model = Event
+        fields = ['id', 'name', 'is_public', 'owner', 'end_date', 'participants', 'task_list']
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id',
-            'username',
-            'password',
-            'email',
+                'id',
+                'username',
+                'password',
+                'email',
         )
         extra_kwargs = {
             'password': {'write_only': True},
