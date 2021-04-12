@@ -1,15 +1,17 @@
 import kivy
 
-from network import NetworkManager
-
 kivy.require('2.0.0')
+
+from network import NetworkManager
+from shared import Shared
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-from kivy.uix.widget import Widget
-from shared import Shared
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 
 
 class RoutineLogin(Screen):
@@ -20,6 +22,8 @@ class RoutineLogin(Screen):
 
     def LoginAccount(self, userInput, password):
         logged_in = self.shared.nm.login(userInput, password)
+        if not logged_in:
+            self.shared.popup_widget('Invalid credentials, try again.', 'Login failed')
         return logged_in
 
 
@@ -64,7 +68,6 @@ class EventSearch(Screen):
 
     def public_event_widget(self, event):
         print(event['id'])
-        w = Widget
         return
 
     def join_public_event(self, eventID, classID=1):
@@ -74,11 +77,45 @@ class EventSearch(Screen):
 class PrivateEventSearch(Screen):
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
+        self.password = ''
         Screen.__init__(self, **kwargs)
 
     def find_private_event(self, event_id):
-        print(event_id)
-        return
+        events = self.shared.nm.get('/events/', True)
+        event_found = False
+        try:
+            for event in events['results']:
+                print(event)
+                if int(event_id) == event['id'] and not event['is_public']:
+                    event_found = True
+                    print(f'found event {event_id}')
+                    break
+                else:
+                    event_found = False
+            if not event_found:
+                self.shared.popup_widget('Make sure your event ID is correct\nand try again.', 'Failed to find event')
+            elif event_found:
+                layout = BoxLayout(orientation='vertical')
+                popup_content = Label(text=f'Event {event["name"]} found!\nPlease enter password.',
+                                      valign='center', halign='center')
+                password_prompt = TextInput(multiline=False, password=True)
+                close_button = Button(text='Submit',
+                                      size_hint=(None, None), size=(80, 40),
+                                      pos_hint={'center_x': 0.5, 'center_y': 0.5})
+                layout.add_widget(popup_content)
+                layout.add_widget(password_prompt)
+                layout.add_widget(close_button)
+                popup = Popup(title='Event found!', title_align='center',
+                              content=layout,
+                              size_hint=(None, None), size=(300, 200),
+                              auto_dismiss=False)
+                close_button.bind(on_press=popup.dismiss)
+                popup.open()
+        except ValueError:
+            self.shared.popup_widget('Make sure you enter an event ID\nand try again.', 'No ID entered')
+
+    def update_password(self, password_prompt):
+        self.password = password_prompt.text
 
 
 class RoutineHome(App):

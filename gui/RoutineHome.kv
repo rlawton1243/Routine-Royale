@@ -127,7 +127,6 @@
             text_size: self.size
 
 
-
 #RoutineMain connects to RoutineLogin, RoutineAccount, RoutineEvents, and RoutinePublicEventSearch. This is the hub to go to
 #each screen of the main app
 <RoutineMain>
@@ -229,6 +228,7 @@
             on_press: app.root.transition = SlideTransition(direction='up')
             on_release: root.manager.current = 'main'
 
+
 #List of events the user is in
 <UserEvents>
 
@@ -244,6 +244,8 @@
             pos_hint: {"right":0.65, "top": 0.1}
             on_press: app.root.transition = SlideTransition(direction='left')
             on_release: root.manager.current = 'main'
+
+
 #Allows for the creation of events
 <EventCreation>
 
@@ -260,7 +262,8 @@
             on_press: app.root.transition = SlideTransition(direction='left')
             on_release: root.manager.current = 'main'
 
-#Menu where the user searches up events
+
+#Menu lists public events
 <PublicEventSearch>
 
     FloatLayout:
@@ -283,6 +286,7 @@
             on_release: root.manager.current = 'main'
 
 
+#Search for a private event based on the ID, does not allow public event searching
 <PrivateEventSearch>
 
     FloatLayout:
