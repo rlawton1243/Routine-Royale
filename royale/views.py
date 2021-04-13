@@ -30,11 +30,10 @@ class AnonCreateAndUpdateOwnerOnly(permissions.BasePermission):
         - allow authenticated GET and PUT on *own* record
         - allow all actions for staff
     https://github.com/encode/django-rest-framework/issues/1067
-    # TODO Validate!
     """
 
     def has_permission(self, request, view):
-        return view.action == 'create' or request.user and request.user.is_authenticated
+        return view.action == "create" or request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         return view.action in ['retrieve', 'update',
@@ -112,6 +111,9 @@ class EventViewSet(viewsets.ModelViewSet):
         try:
             client = Client.objects.filter(user=request.user.id)[0]
             event = Event.objects.get(id=request.data['event'])
+            if not event.is_public:
+                key = request.data['key']
+                assert key == event.event_key
             clazz = Clazz.objects.get(id=request.data['class'])
             req = EventParticipation(client=client, event=event, selected_class=clazz, health=clazz.health)
             req.save()
@@ -127,10 +129,15 @@ class EventViewSet(viewsets.ModelViewSet):
         :param request: HTTP Request object
         :return: HTTP Response
         """
-        event = Event.objects.get(id=request.data['event'])
+        event = Event.objects.get(id=2)
         relevant = EventParticipation.objects.filter(event=event)
-        # TODO: Change to reflect scoring rather than just total completed
-        top = relevant.order_by('total_completed')[:-5]  # TODO: Test <5 Participants
+        relevant = [(p, p.points) for p in relevant]
+        relevant.sort(key=lambda x: x[1])
+        if len(relevant) >= 5:
+            top = relevant[:-5]
+        else:
+            top = relevant
+        top = [p[0] for p in top]
         serializer = EventParticipationSerializer(instance=top, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
@@ -190,18 +197,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class ClientView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-
-
-class ClientCreateAPIView(generics.CreateAPIView):
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = [AnonCreateAndUpdateOwnerOnly, ]
 
 
 class EventParticipationViewSet(viewsets.ModelViewSet):
