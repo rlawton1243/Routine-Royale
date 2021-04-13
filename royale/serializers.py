@@ -14,7 +14,7 @@ class ClazzSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
-    owned_classes = ClazzSerializer(many=True)
+    owned_classes = ClazzSerializer(many=True, required=False)
     email = serializers.CharField(source="user.email", read_only=True)
 
     class Meta:
@@ -23,10 +23,12 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class EventParticipationSerializer(serializers.ModelSerializer):
+    points = serializers.ReadOnlyField()
+
     class Meta:
         model = EventParticipation
         fields = ['id', 'client', 'health', 'energy', 'shield', 'event', 'selected_class', 'completed_tasks',
-                  'completed_steps', 'total_completed', 'streak']
+                  'completed_steps', 'total_completed', 'streak', 'points']
 
 
 class SimpleEventParticipationSerializer(serializers.ModelSerializer):
