@@ -4,7 +4,7 @@ kivy.require('2.0.0')
 
 from network import NetworkManager
 from shared import Shared
-
+from functools import partial
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
@@ -17,6 +17,35 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.properties import StringProperty
 
 
+def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
+    layout = BoxLayout(orientation='vertical')
+    popup_content = Label(text=f'{popup_label}',
+                          valign='center', halign='center')
+    close_button = Button(text=f'{close_button_label}',
+                          size_hint=(None, None), size=(80, 40),
+                          pos_hint={'center_x': 0.5, 'center_y': 0.5})
+    layout.add_widget(popup_content)
+    layout.add_widget(close_button)
+    popup = Popup(title=f'{popup_title}', title_align='center',
+                  content=layout,
+                  size_hint=(None, None), size=(300, 200),
+                  auto_dismiss=False)
+    close_button.bind(on_press=popup.dismiss)
+    popup.open()
+
+
+def get_all_events(self):
+    events = self.nm.get('/events/', True)
+    event_results = events['results']
+    curr_page = 1
+    while events['next'] is not None:
+        curr_page += 1
+        events = self.nm.get(f'/events/?page={curr_page}', True)
+        for event in events['results']:
+            event_results.append(event)
+    return event_results
+
+
 class RoutineLogin(Screen):
 
     def __init__(self, shared: Shared, **kwargs):
@@ -26,7 +55,7 @@ class RoutineLogin(Screen):
     def LoginAccount(self, userInput, password):
         logged_in = self.shared.nm.login(userInput, password)
         if not logged_in:
-            self.shared.popup_widget('Invalid credentials, try again.', 'Login failed')
+            self.popup_widget('Invalid credentials, try again.', 'Login failed')
         return logged_in
 
 
@@ -63,14 +92,7 @@ class EventSearch(Screen):
     pass
 
     def list_public_events(self):
-        events = self.shared.nm.get('/events/', True)
-        event_results = events['results']
-        curr_page = 1
-        while events['next'] is not None:
-            curr_page += 1
-            events = self.shared.nm.get(f'/events/?page={curr_page}', True)
-            for event in events['results']:
-                event_results.append(event)
+        event_results = self.get_all_events()
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435))
         outside_scroll = GridLayout(rows=2, pos_hint={'center_x': 0.5, 'center_y': 0.5})
         inside_scroll = GridLayout(cols=4, size_hint_y=None, spacing=20)
@@ -96,6 +118,7 @@ class EventSearch(Screen):
                 join_button = Button(text='Join Event',
                                      size_hint=(None, None), size=(80, 40),
                                      pos_hint={'center_x': 0.5, 'center_y': 0.5})
+                join_button.bind(on_press=partial(self.join_public_event, event['id']))
                 inside_scroll.add_widget(id_label)
                 inside_scroll.add_widget(title_label)
                 inside_scroll.add_widget(end_date_label)
@@ -110,8 +133,8 @@ class EventSearch(Screen):
         dismiss_button.bind(on_release=events_popup.dismiss)
         events_popup.open()
 
-    def join_public_event(self, eventID, classID=1):
-        return
+    def join_public_event(self, event, instance, classID=1):
+        self.shared.nm.join_event(event, classID)
 
 
 class PrivateEventSearch(Screen):
@@ -121,19 +144,17 @@ class PrivateEventSearch(Screen):
         Screen.__init__(self, **kwargs)
 
     def find_private_event(self, event_id):
-        events = self.shared.nm.get('/events/', True)
         event_found = False
+        event_results = self.get_all_events()
         try:
-            for event in events['results']:
-                print(event)
+            for event in event_results:
                 if int(event_id) == event['id'] and not event['is_public']:
                     event_found = True
-                    print(f'found event {event_id}')
                     break
                 else:
                     event_found = False
             if not event_found:
-                self.shared.popup_widget('Make sure your event ID is correct\nand try again.', 'Failed to find event')
+                self.popup_widget('Make sure your event ID is correct\nand try again.', 'Failed to find event')
             elif event_found:
                 layout = BoxLayout(orientation='vertical')
                 popup_content = Label(text=f'Event {event["name"]} found!\nPlease enter password.',
@@ -149,14 +170,14 @@ class PrivateEventSearch(Screen):
                               content=layout,
                               size_hint=(None, None), size=(300, 200),
                               auto_dismiss=False)
-                close_button.bind(on_release=popup.dismiss)
+                close_button.bind(on_press=partial(self.join_private_event, event_id, password_prompt),
+                                  on_release=popup.dismiss)
                 popup.open()
         except ValueError:
-            self.shared.popup_widget('Make sure you enter an event ID\nand try again.', 'No ID entered')
+            self.popup_widget('Make sure you enter an event ID\nand try again.', 'No ID entered')
 
-    def update_password(self, password_prompt):
-        self.password = password_prompt.text
-        return self.password
+    def join_private_event(self, event, password, instance, classID='1'):
+        self.shared.nm.join_event(event, classID, password.text)
 
 
 class RoutineHome(App):

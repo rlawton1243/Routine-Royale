@@ -234,8 +234,11 @@
 
     FloatLayout:
 
-        Label:
-            text: 'List user events here'
+        Button:
+            text: 'List my events'
+            size_hint: 0.2, 0.1
+            pos_hint: {"right":0.61, "top": 0.9}
+            on_release: root.list_user_events()
 
         Button:
             id: returnMenu
@@ -268,8 +271,8 @@
 
     FloatLayout:
 
-        Label:
-            text: 'List public events here'
+#        Label:
+#            text: 'List public events here'
 
         Button:
             text: 'List public events'
@@ -291,8 +294,8 @@
 
     FloatLayout:
 
-        Label:
-            text: 'Private event here'
+#        Label:
+#            text: 'Private event here'
 
         Label:
             text: 'Enter Private Event ID'

@@ -3,22 +3,16 @@ Django Views
 https://www.django-rest-framework.org/tutorial/3-class-based-views/
 https://stackoverflow.com/questions/21508982/add-custom-route-to-viewsets-modelviewset
 """
-from django.db.models import Q
-from django.http import Http404, HttpResponse
-from rest_framework.decorators import api_view, action, permission_classes
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, Clazz
-
-from rest_framework import viewsets, status, renderers
-from rest_framework import permissions
-from rest_framework import generics
-from rest_framework.views import APIView
-
 from django.contrib.auth.models import User
+from django.db.models import Q
+from rest_framework import permissions
+from rest_framework import viewsets, status, renderers
+from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 
+from royale.models import Client, EventParticipation, Task, Event, Clazz
 from royale.serializers import ClientSerializer, EventSerializer, TaskSerializer, UserSerializer, \
     EventParticipationSerializer
 
@@ -119,7 +113,7 @@ class EventViewSet(viewsets.ModelViewSet):
             # Check public or private
             if not event.is_public:
                 key = request.data['key']
-                assert key == event.event_key
+                assert key == event.event_key, f"Keys don't match! Given {key}, expecting {event.event_key}!"
             clazz = Clazz.objects.get(id=request.data['class'])
             req = EventParticipation(client=client, event=event, selected_class=clazz, health=clazz.health)
             req.save()
