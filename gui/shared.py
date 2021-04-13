@@ -24,7 +24,8 @@ class Shared:
         self.sm = None
         self.nm = None
 
-    def popup_widget(self, popup_label, popup_title, close_button_label='Dismiss'):
+    @staticmethod
+    def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
         layout = BoxLayout(orientation='vertical')
         popup_content = Label(text=f'{popup_label}',
                               valign='center', halign='center')
