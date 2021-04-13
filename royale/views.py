@@ -122,7 +122,7 @@ class EventViewSet(viewsets.ModelViewSet):
             print(e)
             return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug
 
-    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def top_five(self, request):
         """
         Provides Top 5 Users sorted on Points in an Event
@@ -139,7 +139,7 @@ class EventViewSet(viewsets.ModelViewSet):
             top = relevant
         top = [p[0] for p in top]
         serializer = EventParticipationSerializer(instance=top, many=True)
-        return Response(JSONRenderer().render(serializer.data), content_type='json')
+        return Response(JSONRenderer().render(serializer.data), content_type='json', status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def all(self, request):
