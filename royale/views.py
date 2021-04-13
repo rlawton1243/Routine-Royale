@@ -111,6 +111,12 @@ class EventViewSet(viewsets.ModelViewSet):
         try:
             client = Client.objects.filter(user=request.user.id)[0]
             event = Event.objects.get(id=request.data['event'])
+            # Check if in Event already
+            existing = EventParticipation.objects.filter(client=client, event=event)
+            if len(existing) > 0:
+                return Response({"error": f"Event Participation already exists! {existing}"},
+                                status=status.HTTP_409_CONFLICT)
+            # Check public or private
             if not event.is_public:
                 key = request.data['key']
                 assert key == event.event_key
@@ -170,6 +176,31 @@ class TaskViewSet(viewsets.ModelViewSet):
         :return: HTTP Response
         """
         qs = Task.objects.filter(event__eventparticipation__client__user=request.user).order_by('-id')
+        serializer = TaskSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def all_event(self, request):
+        """
+        Returns all User's relevant tasks in an Event
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = Task.objects.filter(event=request.data['event'])
+        qs = qs.filter(event__eventparticipation__client__user=request.user).order_by('-id')
+        serializer = TaskSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def remaining_event(self, request):
+        """
+        Returns all User's relevant tasks in an Event which are not complete
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = Task.objects.filter(event=request.data['event'])
+        qs = qs.filter(event__eventparticipation__client__user=request.user).order_by('-id')
+        qs = qs.filter(~Q(eventparticipation__completed_tasks__in=qs))
         serializer = TaskSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
