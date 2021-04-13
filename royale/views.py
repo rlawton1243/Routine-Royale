@@ -141,6 +141,17 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = EventParticipationSerializer(instance=top, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def all(self, request):
+        """
+        Returns all User's joined Events
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = Event.objects.filter(eventparticipation__client__user_id=request.user).order_by('-id')
+        serializer = EventSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     """
@@ -203,7 +214,18 @@ class UserViewSet(viewsets.ModelViewSet):
 class EventParticipationViewSet(viewsets.ModelViewSet):
     queryset = EventParticipation.objects.all()
     serializer_class = EventParticipationSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
+
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def all(self, request):
+        """
+        Returns all User's EventParticipation
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = EventParticipation.objects.filter(client__user=request.user).order_by('-id')
+        serializer = EventParticipationSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
 
 
 @api_view(['GET', 'POST'])
