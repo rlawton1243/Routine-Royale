@@ -129,7 +129,7 @@ class EventViewSet(viewsets.ModelViewSet):
         :param request: HTTP Request object
         :return: HTTP Response
         """
-        event = Event.objects.get(id=2)
+        event = Event.objects.get(id=request.data['event'])
         relevant = EventParticipation.objects.filter(event=event)
         relevant = [(p, p.points) for p in relevant]
         relevant.sort(key=lambda x: x[1])
