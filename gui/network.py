@@ -93,11 +93,39 @@ class NetworkManager:
             print(f"Error Logging in: {response.status_code} {response.content}")
         return self.logged_in
 
+    def change_password(self, new_password):
+        """
+        Changes the password for the logged in user.
+        :param new_password: str New Password
+        :return: None
+        """
+        assert self.logged_in, "Log in to change password."
+        payload = {
+                'password': new_password
+        }
+        response = self.post('/clients/change_password/', payload)
+        if response.status_code > 299:
+            print(response.content)
+
+    def change_email(self, new_email):
+        """
+        Changes the password for the logged in user.
+        :param new_email: str New Email
+        :return: None
+        """
+        assert self.logged_in, "Log in to change password."
+        payload = {
+                'password': new_email
+        }
+        response = self.post('/clients/change_email/', payload)
+        if response.status_code > 299:
+            print(response.content)
+
     def add_client(self, userID, points=0, desc='placeholder'):
         payload = {
-            'user': {userID},
-            'user_points': points,
-            'user_description': desc,
+                'user':             {userID},
+                'user_points':      points,
+                'user_description': desc,
         }
 
         self.post('/clients/', payload)
@@ -113,16 +141,19 @@ class NetworkManager:
             raise IOError(f"Username and Password not accepted: {res.json()}")
         return res.json()['id']
 
-    def join_event(self, event_id, class_id):
+    def join_event(self, event_id, class_id, private_key=None):
         """
         Joins authenticated user to an Event using API call
         :param event_id: PK for Event to join
         :param class_id: PK for selected class (User must own)
+        :param private_key: int If Private Event, pass the key
         :return: None
         """
         payload = {
-            'event': event_id,
-            'class': class_id,
+                'event': event_id,
+                'class': class_id,
         }
+        if private_key is not None:
+            payload['key'] = private_key
         response = self.post('/events/join_user/', payload)
         print(response)
