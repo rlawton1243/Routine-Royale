@@ -211,7 +211,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer = TaskSerializer(instance=incomplete, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
-    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def complete(self, request):
         """
         Completes a Task for a User.
@@ -221,8 +221,29 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         try:
             task = Task.objects.get(id=request.data['task'])
-            event_participation = EventParticipation.objects.get(id=request.data['participation'])
+            event = task.event
+            event_participation = EventParticipation.objects.filter(client__user=request.user)
+            event_participation = event_participation.filter(event=event)[0]
             event_participation.completed_tasks.add(task)
+            event_participation.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            print(e)
+            return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug
+
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def uncomplete(self, request):
+        """
+        Un-Completes a Task for a User.
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        try:
+            task = Task.objects.get(id=request.data['task'])
+            event = task.event
+            event_participation = EventParticipation.objects.filter(client__user=request.user)
+            event_participation = event_participation.filter(event=event)[0]
+            event_participation.completed_tasks.remove(task)
             event_participation.save()
             return Response(status=status.HTTP_202_ACCEPTED)
         except Exception as e:

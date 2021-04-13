@@ -175,3 +175,54 @@ class NetworkManager:
         }
         response = self.post('/events/top_five/', payload, json_decode=True)
         return response
+
+    def get_event_tasks(self, event_id):
+        """
+        Returns tasks of Event as a list of complete and a list of incomplete Tasks
+        :param event_id: int Event PK
+        :return: complete, incomplete
+        """
+        assert self.logged_in, "Log in to see remaining Event tasks."
+        payload = {
+                'event': event_id
+        }
+        all = self.post('/tasks/all_event/', payload, json_decode=True)
+        incomplete = self.post('/tasks/remaining_event/', payload, json_decode=True)
+        complete = []
+        for task in all:
+            found = False
+            for inc in incomplete:
+                if inc['id'] == task['id']:
+                    found = True
+            if not found:
+                complete.append(task)
+
+        return complete, incomplete
+
+    def complete_task(self, task_id):
+        """
+        Marks task as Completed.
+        :param task_id: PK to Task
+        :return: None
+        """
+        assert self.logged_in, "Log in to complete a Task."
+        payload = {
+                'task': task_id
+        }
+        response = self.post('/tasks/complete/', payload)
+        if response.status_code > 299:
+            print(response.content)
+
+    def uncomplete_task(self, task_id):
+        """
+        Marks task as NOT Completed.
+        :param task_id: PK to Task
+        :return: None
+        """
+        assert self.logged_in, "Log in to uncomplete a Task."
+        payload = {
+                'task': task_id
+        }
+        response = self.post('/tasks/uncomplete/', payload)
+        if response.status_code > 299:
+            print(response.content)
