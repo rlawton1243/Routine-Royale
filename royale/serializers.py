@@ -66,7 +66,7 @@ class TaskSerializer(serializers.ModelSerializer):
             t.saturday = 'S' in data
 
     schedule = ScheduleField()
-    steps = TaskStepSerializer(source='taskstep_set', many=True)
+    steps = TaskStepSerializer(source='taskstep_set', many=True, read_only=True)
 
     class Meta:
         model = Task
@@ -74,8 +74,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True)
-    task_list = TaskSerializer(source='task_set', many=True)
+    participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True, read_only=True)
+    task_list = TaskSerializer(source='task_set', many=True, read_only=True)
 
     class Meta:
         model = Event

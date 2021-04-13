@@ -26,7 +26,7 @@ class NetworkManager:
         if self.s.cookies is not None and 'csrftoken' in self.s.cookies:
             return self.s.cookies['csrftoken']
 
-    def post(self, url, payload, json_decode=False):
+    def post(self, url, payload, json_decode=False, json_encode=False):
         """
         POSTs using the connection appending CSRF if exists
         :param url: str URL to POST to
@@ -37,7 +37,10 @@ class NetworkManager:
                 'X-CSRFToken': self.csrf,
                 'Referer':     '/'
         }
-        response = self.s.post(_url(url), data=payload, headers=headers)
+        if not json_encode:
+            response = self.s.post(_url(url), data=payload, headers=headers)
+        else:
+            response = self.s.post(_url(url), json=payload, headers=headers)
         if not json_decode:
             return response
         else:
@@ -226,3 +229,9 @@ class NetworkManager:
         response = self.post('/tasks/uncomplete/', payload)
         if response.status_code > 299:
             print(response.content)
+
+    def create_event(self, name):
+        pass
+
+    def create_task(self, name, event, schedule, due_time, repeating):
+        pass
