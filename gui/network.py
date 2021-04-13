@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from shared import Shared
+from gui.shared import Shared
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext
@@ -26,7 +26,7 @@ class NetworkManager:
         if self.s.cookies is not None and 'csrftoken' in self.s.cookies:
             return self.s.cookies['csrftoken']
 
-    def post(self, url, payload):
+    def post(self, url, payload, json_decode=False):
         """
         POSTs using the connection appending CSRF if exists
         :param url: str URL to POST to
@@ -34,10 +34,20 @@ class NetworkManager:
         :return: Response
         """
         headers = {
-            'X-CSRFToken': self.csrf,
-            'Referer': '/'
+                'X-CSRFToken': self.csrf,
+                'Referer':     '/'
         }
-        return self.s.post(_url(url), data=payload, headers=headers)
+        response = self.s.post(_url(url), data=payload, headers=headers)
+        if not json_decode:
+            return response
+        else:
+            if 200 <= response.status_code <= 299:
+                try:
+                    return json.loads(response.content)
+                except Exception as e:
+                    raise IOError(f"Invalid JSON {response.content} ({response.status_code})  ({e})")
+            else:
+                raise IOError(f"GET response was unexpected at {url}: {response.status_code} : {response.content}")
 
     def get(self, url, json_decode=False):
         """
@@ -157,3 +167,11 @@ class NetworkManager:
             payload['key'] = private_key
         response = self.post('/events/join_user/', payload)
         print(response)
+
+    def top_five(self, event_id):
+        assert self.logged_in, "Log in to see Top 5."
+        payload = {
+                'event': event_id
+        }
+        response = self.post('/events/top_five/', payload, json_decode=True)
+        return response
