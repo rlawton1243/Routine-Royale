@@ -18,10 +18,14 @@ class EventParticipation(models.Model):
     shield = models.IntegerField(default=0)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     selected_class = models.ForeignKey('Clazz', default=1, on_delete=models.SET_DEFAULT)
-    completed_tasks = models.ManyToManyField('Task')
-    completed_steps = models.ManyToManyField('TaskStep')
+    completed_tasks = models.ManyToManyField('Task', blank=True)
+    completed_steps = models.ManyToManyField('TaskStep', blank=True)
     total_completed = models.IntegerField(default=0)
     streak = models.IntegerField(default=0)
+
+    @property
+    def points(self):
+        return self.total_completed + (.25 * self.streak * self.total_completed)
 
     def __str__(self):
         return f"{str(self.client)} -> {str(self.event)}"
@@ -86,13 +90,13 @@ class TaskSchedule(models.Model):
     sunday = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{"U" if self.sunday else ""}' \
-               f'{"M" if self.monday else ""}' \
+        return f'{"M" if self.monday else ""}' \
                f'{"T" if self.tuesday else ""}' \
                f'{"W" if self.wednesday else ""}' \
                f'{"R" if self.thursday else ""}' \
                f'{"F" if self.friday else ""}' \
-               f'{"S" if self.saturday else ""}'
+               f'{"S" if self.saturday else ""}' \
+               f'{"U" if self.sunday else ""}'
 
 
 class Event(models.Model):
@@ -105,6 +109,7 @@ class Event(models.Model):
     is_public = models.BooleanField(default=True)
     owner = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
     end_date = models.DateTimeField(default=datetime.now, blank=True)
+    random_seed = models.CharField(max_length=6, default=0, blank=True)
 
     @property
     def event_max_points(self):
@@ -112,7 +117,14 @@ class Event(models.Model):
 
     @property
     def event_key(self):
-        return f'{self.id}-{random.randrange(100000, 999999)}'
+        return f'{self.id}-{self.random_seed}'
+
+    def create_rando(self):
+        self.random_seed = random.randrange(100000, 999999)
+
+    def save(self, *args, **kwargs):
+        self.create_rando()
+        super(Event, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.event_key})"
