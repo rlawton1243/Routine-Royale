@@ -29,8 +29,26 @@ Tasks fetched, skipping steps until later
 """
 
 from django.core.management.base import BaseCommand, CommandError
-from royale.models import Event, Task, EventParticipation
+from royale.models import Event, Task, EventParticipation, Client
 from datetime import *
+from django.utils import timezone
+import pytz
+
+
+def event_end(event):
+    """
+        If event is complete, perform event completion tasks
+
+        - Give points to all event participators
+        Points = total_completed + (.25*streak*total_completed)
+    """
+    participators = event.eventparticipation_set.all()
+
+    for participant in participators:
+        client = Client.objects.get(eventparticipation__id=participant.id)
+        client.points += (participant.total_completed + (.25 * participant.streak * participant.total_completed))
+        client.save()
+        participant.save()
 
 
 class Command(BaseCommand):
@@ -41,8 +59,7 @@ class Command(BaseCommand):
 
         for event in events:
             print(event)
-            # All Tasks
-            today = datetime.now().replace(hour=23, minute=59)
+            today = timezone.now().replace(hour=23, minute=59)
             curr_weekday = datetime.today().weekday()
             tasks_due_today = event.task_set.filter(due_time__lte=today)
 
@@ -74,8 +91,10 @@ class Command(BaseCommand):
                 if task.schedule is None:
                     """
                     If Task does not have a schedule task will be deleted
+                    
+                    However we are not doing this until later
                     """
-                    # TODO: Delete Task if it does not have schedule
+
                     continue
 
                 else:
@@ -115,7 +134,10 @@ class Command(BaseCommand):
                         task.due_time = task.due_time + timedelta(days=schedule.index(1)+1)
                     elif not task.repeating:
                         pass
-                        # TODO: Delete the Task.
 
                 task.save()
             print('\n')
+            # Check if event is completed
+            if event.end_date <= today:
+                event_end(event)
+                continue
