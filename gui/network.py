@@ -3,7 +3,7 @@ import json
 
 import requests
 
-from gui.shared import Shared
+datetime
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext

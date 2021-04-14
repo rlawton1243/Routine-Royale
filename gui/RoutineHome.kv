@@ -155,7 +155,7 @@
             size_hint: 0.4, 0.1
             pos_hint: {"right":0.7, "top": 0.75}
             on_press: app.root.transition = SlideTransition(direction='right')
-            on_release: root.manager.current = 'userEvents'
+            on_release: root.list_user_events()
 
         Button:
             id: userEvents
@@ -171,8 +171,7 @@
             size_hint: 0.4, 0.1
             pos_hint: {"right":0.7, "top": 0.45}
             on_press: app.root.transition = SlideTransition(direction='right')
-            on_release:
-                root.manager.current = 'publicEventSearch'
+            on_release: root.list_public_events()
 
 
         Button:
@@ -227,49 +226,6 @@
             pos_hint: {"right":0.65, "top": 0.1}
             on_press: app.root.transition = SlideTransition(direction='up')
             on_release: root.manager.current = 'main'
-
-
-#List of events the user is in
-<UserEvents>
-
-    FloatLayout:
-
-        Button:
-            text: 'List my events'
-            size_hint: 0.2, 0.1
-            pos_hint: {"right":0.61, "top": 0.9}
-            on_release: root.list_user_events()
-
-        Button:
-            id: returnMenu
-            text: 'Return to Main Menu'
-            size_hint: 0.3, 0.1
-            pos_hint: {"right":0.65, "top": 0.1}
-            on_press: app.root.transition = SlideTransition(direction='left')
-            on_release: root.manager.current = 'main'
-
-#Menu lists public events
-<PublicEventSearch>
-
-    FloatLayout:
-
-#        Label:
-#            text: 'List public events here'
-
-        Button:
-            text: 'List public events'
-            size_hint: 0.2, 0.1
-            pos_hint: {"right":0.61, "top": 0.9}
-            on_release: root.list_public_events()
-
-        Button:
-            id: returnMenu
-            text: 'Return to Main Menu'
-            size_hint: 0.3, 0.1
-            pos_hint: {"right":0.65, "top": 0.1}
-            on_press: app.root.transition = SlideTransition(direction='left')
-            on_release: root.manager.current = 'main'
-
 
 #Search for a private event based on the ID, does not allow public event searching
 <PrivateEventSearch>
