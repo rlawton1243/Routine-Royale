@@ -24,10 +24,12 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class EventParticipationSerializer(serializers.ModelSerializer):
     points = serializers.ReadOnlyField()
+    username = serializers.CharField(source='client.user.username', read_only=True)
 
     class Meta:
         model = EventParticipation
-        fields = ['id', 'client', 'health', 'energy', 'shield', 'event', 'selected_class', 'completed_tasks',
+        fields = ['id', 'client', 'username', 'health', 'energy', 'shield', 'event', 'selected_class',
+                  'completed_tasks',
                   'completed_steps', 'total_completed', 'streak', 'points']
 
 
