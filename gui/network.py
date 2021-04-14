@@ -1,11 +1,8 @@
-import datetime
 import json
 
-import requestsimport
-
-datetime
-
-datetime
+import requests
+import datetime
+from shared import Shared
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext
