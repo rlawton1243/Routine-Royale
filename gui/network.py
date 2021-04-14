@@ -239,6 +239,7 @@ class NetworkManager:
         response = self.post('/events/', payload)
         if response.status_code > 299:
             print(response.content)
+        return json.loads(response.content)
 
     def create_task(self, name, event, repeating, schedule=None, due_time=None):
         payload = {
@@ -256,3 +257,4 @@ class NetworkManager:
         response = self.post('/tasks/', payload)
         if response.status_code > 299:
             print(response.content)
+        return json.loads(response.content)
