@@ -152,6 +152,7 @@ class NetworkManager:
 
         res = self.post('/users/', payload)
         if res.status_code > 299:
+            print(res.content)
             raise IOError(f"Username and Password not accepted: {res.json()}")
         return res.json()['id']
 
@@ -168,9 +169,10 @@ class NetworkManager:
             'class': class_id,
         }
         if private_key is not None:
-            payload['key'] = private_key
+            payload['key'] = f"{event_id}-{private_key}"
         response = self.post('/events/join_user/', payload)
-        print(response)
+        if response.status_code > 299:
+            print(response.content)
 
     def top_five(self, event_id):
         assert self.logged_in, "Log in to see Top 5."
