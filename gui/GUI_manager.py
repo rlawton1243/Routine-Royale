@@ -150,8 +150,14 @@ class UserEvents(Screen):
     def switch_screen(self, event, instance):
         self.events_popup.dismiss()
         self.shared.req_event_title = event['name']
-        for task in event['task_list']:
-            self.shared.req_event_tasks.append(task)
+        self.shared.event_name_label.text = event['name']
+        self.shared.event_tasks = GridLayout(cols=2, size_hint_y=None, spacing=20)
+        for task in self.shared.req_event_tasks:
+            task_desc = Label(text=f'{task}; complete?')
+            task_comp = CheckBox()
+            self.shared.event_tasks.append(task_comp)
+            self.shared.event_tasks.add_widget(task_desc)
+            self.shared.event_tasks.add_widget(task_comp)
         self.manager.transition.direction = 'down'
         self.manager.current = 'eventDetails'
 
@@ -164,18 +170,16 @@ class EventDetails(Screen):
 
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435),
                                    pos_hint={'center_x': 0.55, 'center_y': 0.5})
-        self.inside_scroll = GridLayout(cols=2, size_hint_y=None, spacing=20)
+        self.inside_scroll = GridLayout(cols=1, size_hint_y=None, spacing=20)
         self.inside_scroll.bind(minimum_height=self.inside_scroll.setter('height'))
         event_name_label = Label(text='Event title:')
-        event_name = Label(text=f'{self.shared.req_event_title}')
+        event_name = Label(text=self.shared.req_event_title)
+        shared.event_name_label = event_name
         self.inside_scroll.add_widget(event_name_label)
         self.inside_scroll.add_widget(event_name)
-        for task in self.shared.req_event_tasks:
-            task_desc = Label(text=f'{task}; complete?')
-            task_comp = CheckBox()
-            self.completed_tasks.append(task_comp)
-            self.inside_scroll.add_widget(task_desc)
-            self.inside_scroll.add_widget(task_comp)
+        self.tasks = GridLayout(cols=2, size_hint_y=None, spacing=20)
+        self.inside_scroll.add_widget(self.tasks)
+        shared.event_tasks = self.tasks
         return_main = Button(text='Return to Main Menu',
                              size_hint=(0.3, 0.1), pos_hint={"center_x": 0.5, "top": 0.1},
                              on_release=self.switch_screen)
@@ -233,7 +237,7 @@ class EventCreation(Screen):
 
     def submit_event(self, title_input, is_public_in, date_input, instance):
         is_public = True
-        if is_public_in.state is not 'normal':
+        if is_public_in.state != 'normal':
             is_public = False
         event_info = self.shared.nm.create_event(title_input.text, is_public)
         for desc in self.tasks_info:

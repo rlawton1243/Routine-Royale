@@ -16,3 +16,5 @@ class Shared:
         self.app = None
         self.sm = None
         self.nm = None
+        self.event_name_label = None
+        self.event_tasks = None
