@@ -17,6 +17,7 @@ class Shared:
         self.sm = None
         self.nm = None
         self.event_name_label = None
+        self.event_id = None
         self.event_details_scroll = None
         self.event_details_widgets = []
         self.complete = []

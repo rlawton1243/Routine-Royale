@@ -1,7 +1,9 @@
 import datetime
 import json
 
-import requests
+import requestsimport
+
+datetime
 
 datetime
 
@@ -211,6 +213,7 @@ class NetworkManager:
         :param task_id: PK to Task
         :return: None
         """
+        print(f"Completing {task_id}")
         assert self.logged_in, "Log in to complete a Task."
         payload = {
                 'task': task_id
@@ -225,6 +228,7 @@ class NetworkManager:
         :param task_id: PK to Task
         :return: None
         """
+        print(f"Uncompleting {task_id}")
         assert self.logged_in, "Log in to uncomplete a Task."
         payload = {
             'task': task_id
