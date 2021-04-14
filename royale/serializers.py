@@ -65,7 +65,7 @@ class TaskSerializer(serializers.ModelSerializer):
             t.friday = 'F' in data
             t.saturday = 'S' in data
 
-    schedule = ScheduleField()
+    schedule = ScheduleField(read_only=True)
     steps = TaskStepSerializer(source='taskstep_set', many=True, read_only=True)
 
     class Meta:

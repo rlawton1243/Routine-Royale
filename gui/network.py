@@ -1,6 +1,7 @@
 import json
 
 import requests
+import datetime
 
 from gui.shared import Shared
 
@@ -231,7 +232,27 @@ class NetworkManager:
             print(response.content)
 
     def create_event(self, name):
-        pass
+        assert self.logged_in, "Log in to uncomplete a Task."
+        payload = {
+                'name': name
+        }
+        response = self.post('/events/', payload)
+        if response.status_code > 299:
+            print(response.content)
 
-    def create_task(self, name, event, schedule, due_time, repeating):
-        pass
+    def create_task(self, name, event, repeating, schedule=None, due_time=None):
+        payload = {
+                'name':      name,
+                'event':     event,
+                'repeating': repeating,
+        }
+        if schedule is not None:
+            payload['schedule'] = schedule
+        if due_time is not None:
+            payload['due_time'] = due_time
+        else:
+            payload['due_time'] = datetime.datetime.today().replace(hour=11, minute=59, second=59)
+
+        response = self.post('/tasks/', payload)
+        if response.status_code > 299:
+            print(response.content)
