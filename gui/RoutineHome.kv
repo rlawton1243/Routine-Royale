@@ -31,16 +31,16 @@
         Button:
             id: createAccount
             text: 'Create Account'
-            size_hint: 0.5, 0.1
-            pos_hint: {"left":0, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.28, "top":0.35}
             on_press: app.root.transition = SlideTransition(direction='left')
             on_release: root.manager.current = 'create'
 
         Button:
             id: accountLogin
             text: 'Login'
-            size_hint: 0.5, 0.1
-            pos_hint: {"right":1, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.75, "top":0.35}
             on_press: app.root.transition = FadeTransition()
             on_release: if root.LoginAccount(userInput.text, passInput.text) == True: root.manager.current = 'main'
 
@@ -83,16 +83,16 @@
         Button:
             id: createAccount
             text: 'Return to login'
-            size_hint: 0.5, 0.1
-            pos_hint: {"left":0, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.28, "top":0.35}
             on_press: app.root.transition = SlideTransition(direction='right')
             on_release: root.manager.current = 'login'
 
         Button:
             id: accountLogin
             text: 'Create Account'
-            size_hint: 0.5, 0.1
-            pos_hint: {"right":1, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.75, "top":0.35}
             on_press:
                 root.CreateAccount(userInput, passInput)
 
@@ -247,24 +247,6 @@
             pos_hint: {"right":0.65, "top": 0.1}
             on_press: app.root.transition = SlideTransition(direction='left')
             on_release: root.manager.current = 'main'
-
-
-#Allows for the creation of events
-<EventCreation>
-
-    FloatLayout:
-
-        Label:
-            text: 'Event creation options here'
-
-        Button:
-            id: returnMenu
-            text: 'Return to Main Menu'
-            size_hint: 0.3, 0.1
-            pos_hint: {"right":0.65, "top": 0.1}
-            on_press: app.root.transition = SlideTransition(direction='left')
-            on_release: root.manager.current = 'main'
-
 
 #Menu lists public events
 <PublicEventSearch>

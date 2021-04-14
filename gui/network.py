@@ -1,7 +1,7 @@
+import datetime
 import json
 
 import requests
-import datetime
 
 from gui.shared import Shared
 
@@ -164,8 +164,8 @@ class NetworkManager:
         :return: None
         """
         payload = {
-                'event': event_id,
-                'class': class_id,
+            'event': event_id,
+            'class': class_id,
         }
         if private_key is not None:
             payload['key'] = private_key
@@ -225,27 +225,28 @@ class NetworkManager:
         """
         assert self.logged_in, "Log in to uncomplete a Task."
         payload = {
-                'task': task_id
+            'task': task_id
         }
         response = self.post('/tasks/uncomplete/', payload)
         if response.status_code > 299:
             print(response.content)
 
-    def create_event(self, name):
-        assert self.logged_in, "Log in to uncomplete a Task."
+    def create_event(self, name, is_public=True):
+        assert self.logged_in, "Log in to create an event."
         payload = {
-                'name': name
+            'name': name,
+            'is_public': is_public
         }
         response = self.post('/events/', payload)
         if response.status_code > 299:
             print(response.content)
         return json.loads(response.content)
 
-    def create_task(self, name, event, repeating, schedule=None, due_time=None):
+    def create_task(self, name, event, repeating=False, schedule=None, due_time=None):
         payload = {
-                'name':      name,
-                'event':     event,
-                'repeating': repeating,
+            'name': name,
+            'event': event,
+            'repeating': repeating,
         }
         if schedule is not None:
             payload['schedule'] = schedule
