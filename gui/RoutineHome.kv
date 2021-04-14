@@ -1,7 +1,7 @@
 #:kivy 2.0.0
 #: import SlideTransition kivy.uix.screenmanager.SlideTransition
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
-
+#: import Animation kivy.animation.Animation
 
 #TODO: Implement all API calls
 
@@ -31,19 +31,18 @@
         Button:
             id: createAccount
             text: 'Create Account'
-            size_hint: 0.5, 0.1
-            pos_hint: {"left":0, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.28, "top":0.35}
             on_press: app.root.transition = SlideTransition(direction='left')
             on_release: root.manager.current = 'create'
 
         Button:
             id: accountLogin
             text: 'Login'
-            size_hint: 0.5, 0.1
-            pos_hint: {"right":1, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.75, "top":0.35}
             on_press: app.root.transition = FadeTransition()
-            on_release: root.LoginAccount(userInput.text, passInput.text)
-
+            on_release: if root.LoginAccount(userInput.text, passInput.text) == True: root.manager.current = 'main'
 
         TextInput:
             id: userInput
@@ -84,16 +83,16 @@
         Button:
             id: createAccount
             text: 'Return to login'
-            size_hint: 0.5, 0.1
-            pos_hint: {"left":0, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.28, "top":0.35}
             on_press: app.root.transition = SlideTransition(direction='right')
             on_release: root.manager.current = 'login'
 
         Button:
             id: accountLogin
             text: 'Create Account'
-            size_hint: 0.5, 0.1
-            pos_hint: {"right":1, "top":0.35}
+            size_hint: 0.2, 0.1
+            pos_hint: {"center_x":0.75, "top":0.35}
             on_press:
                 root.CreateAccount(userInput, passInput)
 
@@ -128,8 +127,7 @@
             text_size: self.size
 
 
-
-#RoutineMain connects to RoutineLogin, RoutineAccount, RoutineEvents, and RoutineEventSearch. This is the hub to go to
+#RoutineMain connects to RoutineLogin, RoutineAccount, RoutineEvents, and RoutinePublicEventSearch. This is the hub to go to
 #each screen of the main app
 <RoutineMain>
 
@@ -146,35 +144,48 @@
             text: 'Account information'
             size_hint: 0.3, 0.1
             pos_hint: {"right":1, "top": 1}
-            on_press: app.root.transition = SlideTransition(direction='down')
+            on_press:
+                root.shared.account.update_username()
+                app.root.transition = SlideTransition(direction='down')
             on_release: root.manager.current = 'accountInfo'
 
         Button:
             id: userEvents
             text: 'User Events'
             size_hint: 0.4, 0.1
-            pos_hint: {"right":0.7, "top": 0.7}
+            pos_hint: {"right":0.7, "top": 0.75}
             on_press: app.root.transition = SlideTransition(direction='right')
-            on_release: root.manager.current = 'userEvents'
-
-        Button:
-            id: userEvents
-            text: 'Search Events'
-            size_hint: 0.4, 0.1
-            pos_hint: {"right":0.7, "top": 0.55}
-            on_press: app.root.transition = SlideTransition(direction='right')
-            on_release: root.manager.current = 'eventSearch'
+            on_release: root.list_user_events()
 
         Button:
             id: userEvents
             text: 'Create Event'
             size_hint: 0.4, 0.1
-            pos_hint: {"right":0.7, "top": 0.4}
+            pos_hint: {"right":0.7, "top": 0.6}
             on_press: app.root.transition = SlideTransition(direction='right')
             on_release: root.manager.current = 'eventCreation'
 
+        Button:
+            id: userEvents
+            text: 'List Public Events'
+            size_hint: 0.4, 0.1
+            pos_hint: {"right":0.7, "top": 0.45}
+            on_press: app.root.transition = SlideTransition(direction='right')
+            on_release: root.list_public_events()
+
+
+        Button:
+            id: userEvents
+            text: 'Join Private Event'
+            size_hint: 0.4, 0.1
+            pos_hint: {"right":0.7, "top": 0.3}
+            on_press: app.root.transition = SlideTransition(direction='right')
+            on_release: root.manager.current = 'privateEventSearch'
+
+
 #Allows the user to view and edit their account information
 <AccountInfo>
+    userField: userField
 
     FloatLayout:
 
@@ -182,6 +193,11 @@
             text: 'Account Information'
             size_hint: 0.5, 0.2
             pos_hint: {"right":0.75, "top":1}
+
+        Label:
+            id: userField
+            size_hint: 0.5, 0.2
+            pos_hint: {"right":1, "top":0.8}
 
         Label:
             text: 'Username:'
@@ -211,44 +227,18 @@
             on_press: app.root.transition = SlideTransition(direction='up')
             on_release: root.manager.current = 'main'
 
-#List of events the user is in
-<UserEvents>
+#Search for a private event based on the ID, does not allow public event searching
+<PrivateEventSearch>
 
     FloatLayout:
 
-        Label:
-            text: 'List user events here'
-
-        Button:
-            id: returnMenu
-            text: 'Return to Main Menu'
-            size_hint: 0.3, 0.1
-            pos_hint: {"right":0.65, "top": 0.1}
-            on_press: app.root.transition = SlideTransition(direction='left')
-            on_release: root.manager.current = 'main'
-#Allows for the creation of events
-<EventCreation>
-
-    FloatLayout:
+#        Label:
+#            text: 'Private event here'
 
         Label:
-            text: 'Event creation options here'
-
-        Button:
-            id: returnMenu
-            text: 'Return to Main Menu'
-            size_hint: 0.3, 0.1
-            pos_hint: {"right":0.65, "top": 0.1}
-            on_press: app.root.transition = SlideTransition(direction='left')
-            on_release: root.manager.current = 'main'
-
-#Menu where the user searches up events
-<EventSearch>
-
-    FloatLayout:
-
-        Label:
-            text: 'Search function here'
+            text: 'Enter Private Event ID'
+            size_hint: 0.5, 0.1
+            pos_hint: {"right":0.65, "top":0.97}
 
         TextInput:
             id: searchQuery
@@ -260,7 +250,7 @@
             text: 'Search'
             size_hint: 0.2, 0.1
             pos_hint: {"right":0.9, "top": 0.9}
-            on_release: print(searchQuery.text)
+            on_release: root.find_private_event(searchQuery.text)
 
         Button:
             id: returnMenu

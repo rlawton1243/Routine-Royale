@@ -24,10 +24,12 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class EventParticipationSerializer(serializers.ModelSerializer):
     points = serializers.ReadOnlyField()
+    username = serializers.CharField(source='client.user.username', read_only=True)
 
     class Meta:
         model = EventParticipation
-        fields = ['id', 'client', 'health', 'energy', 'shield', 'event', 'selected_class', 'completed_tasks',
+        fields = ['id', 'client', 'username', 'health', 'energy', 'shield', 'event', 'selected_class',
+                  'completed_tasks',
                   'completed_steps', 'total_completed', 'streak', 'points']
 
 
@@ -65,8 +67,8 @@ class TaskSerializer(serializers.ModelSerializer):
             t.friday = 'F' in data
             t.saturday = 'S' in data
 
-    schedule = ScheduleField()
-    steps = TaskStepSerializer(source='taskstep_set', many=True)
+    schedule = ScheduleField(read_only=True)
+    steps = TaskStepSerializer(source='taskstep_set', many=True, read_only=True)
 
     class Meta:
         model = Task
@@ -74,8 +76,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True)
-    task_list = TaskSerializer(source='task_set', many=True)
+    participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True, read_only=True)
+    task_list = TaskSerializer(source='task_set', many=True, read_only=True)
 
     class Meta:
         model = Event
