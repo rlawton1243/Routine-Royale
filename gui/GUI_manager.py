@@ -151,13 +151,25 @@ class UserEvents(Screen):
         self.events_popup.dismiss()
         self.shared.req_event_title = event['name']
         self.shared.event_name_label.text = event['name']
-        self.shared.event_tasks = GridLayout(cols=2, size_hint_y=None, spacing=20)
-        for task in self.shared.req_event_tasks:
-            task_desc = Label(text=f'{task}; complete?')
+        complete, incomplete = self.shared.nm.get_event_tasks(event['id'])
+        scroll = self.shared.event_details_scroll
+        for widget in self.shared.event_details_widgets:
+            scroll.remove_widget(widget)
+        self.shared.event_details_widgets = []
+        for task in complete:
+            task_desc = Label(text=f'{task["name"]}')
             task_comp = CheckBox()
-            self.shared.event_tasks.append(task_comp)
-            self.shared.event_tasks.add_widget(task_desc)
-            self.shared.event_tasks.add_widget(task_comp)
+            scroll.add_widget(task_desc)
+            scroll.add_widget(task_comp)
+            self.shared.event_details_widgets.append(task_desc)
+            self.shared.event_details_widgets.append(task_comp)
+        for task in incomplete:
+            task_desc = Label(text=f'{task["name"]}')
+            task_comp = CheckBox()
+            scroll.add_widget(task_desc)
+            scroll.add_widget(task_comp)
+            self.shared.event_details_widgets.append(task_desc)
+            self.shared.event_details_widgets.append(task_comp)
         self.manager.transition.direction = 'down'
         self.manager.current = 'eventDetails'
 
@@ -170,16 +182,14 @@ class EventDetails(Screen):
 
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435),
                                    pos_hint={'center_x': 0.55, 'center_y': 0.5})
-        self.inside_scroll = GridLayout(cols=1, size_hint_y=None, spacing=20)
+        self.inside_scroll = GridLayout(cols=2, size_hint_y=None, spacing=20)
         self.inside_scroll.bind(minimum_height=self.inside_scroll.setter('height'))
         event_name_label = Label(text='Event title:')
         event_name = Label(text=self.shared.req_event_title)
         shared.event_name_label = event_name
         self.inside_scroll.add_widget(event_name_label)
         self.inside_scroll.add_widget(event_name)
-        self.tasks = GridLayout(cols=2, size_hint_y=None, spacing=20)
-        self.inside_scroll.add_widget(self.tasks)
-        shared.event_tasks = self.tasks
+        shared.event_details_scroll = self.inside_scroll
         return_main = Button(text='Return to Main Menu',
                              size_hint=(0.3, 0.1), pos_hint={"center_x": 0.5, "top": 0.1},
                              on_release=self.switch_screen)
@@ -243,7 +253,6 @@ class EventCreation(Screen):
         for desc in self.tasks_info:
             name = desc.text
             self.shared.nm.create_task(name, event_info['id'])
-        # print(date_input.text)
 
     def add_task_box(self, instance):
         task_label = Label(text='Enter task description:', size_hint=(None, None), size=(250, 40),
