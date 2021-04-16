@@ -49,7 +49,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         :param request: HTTP Request object
         :return: HTTP Response
         """
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             try:
                 user = request.user
                 user.set_password(request['password'])
@@ -68,12 +68,31 @@ class ClientViewSet(viewsets.ModelViewSet):
         :param request: HTTP Request object
         :return: HTTP Response
         """
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             try:
                 user = request.user
                 user.email = request.data['email']
                 user.save()
                 return Response(status=status.HTTP_202_ACCEPTED)
+            except Exception as e:
+                print(e)
+                return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def logged_in(self, request):
+        """
+        Get Client from logged in User PK
+        :param request: HTTP Request object
+        :return: HTTP Response
+        """
+        if request.user.is_authenticated:
+            try:
+                user = request.user
+                client = Client.objects.filter(user=user)[0]
+                serializer = ClientSerializer(instance=client)
+                return Response(JSONRenderer().render(serializer.data), content_type='json')
             except Exception as e:
                 print(e)
                 return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE)  # TODO: Remove Debug

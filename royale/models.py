@@ -103,7 +103,6 @@ class Event(models.Model):
     """
     Defines an Event containing Tasks, with participating Users.
     """
-
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
     is_public = models.BooleanField(default=True)

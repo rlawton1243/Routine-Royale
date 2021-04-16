@@ -8,6 +8,7 @@ router.register(r'clients', views.ClientViewSet)
 router.register(r'events', views.EventViewSet)
 router.register(r'tasks', views.TaskViewSet)
 router.register(r'users', views.UserViewSet)
+#router.register(r'test', views.join_event)
 router.register(r'participations', views.EventParticipationViewSet)
 
 # Wire up our API using automatic URL routing.

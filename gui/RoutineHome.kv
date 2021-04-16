@@ -186,6 +186,9 @@
 #Allows the user to view and edit their account information
 <AccountInfo>
     userField: userField
+    emailField: emailField
+    descriptionField: descriptionField
+    pointsField: pointsField
 
     FloatLayout:
 
@@ -197,25 +200,30 @@
         Label:
             id: userField
             size_hint: 0.5, 0.2
-            pos_hint: {"right":1, "top":0.8}
+            pos_hint: {"right":1, "top":0.9}
 
         Label:
             text: 'Username:'
             size_hint: 0.5, 0.2
-            pos_hint: {"right":0.5, "top":0.8}
+            pos_hint: {"right":0.5, "top":0.9}
 
         Label:
-            text: 'Password:'
+            id: emailField
             size_hint: 0.5, 0.2
-            pos_hint: {"right":0.5, "top":0.7}
+            pos_hint: {"right":1, "top":0.8}
 
         Label:
             text: 'Email:'
             size_hint: 0.5, 0.2
-            pos_hint: {"right":0.5, "top":0.6}
+            pos_hint: {"right":0.5, "top":0.8}
 
         Label:
-            text: 'About me:'
+            id: descriptionField
+            size_hint: 0.5, 0.2
+            pos_hint: {"right":1, "top":0.7}
+
+        Label:
+            text: 'Description:'
             size_hint: 0.5, 0.2
             pos_hint: {"right":0.5, "top":0.7}
 
