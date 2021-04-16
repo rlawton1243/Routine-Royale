@@ -134,7 +134,7 @@ class EventViewSet(viewsets.ModelViewSet):
         relevant = [(p, p.points) for p in relevant]
         relevant.sort(key=lambda x: x[1])
         if len(relevant) >= 5:
-            top = relevant[:-5]
+            top = relevant[-5:]
         else:
             top = relevant
         top = [p[0] for p in top]
