@@ -29,7 +29,7 @@ Tasks fetched, skipping steps until later
 """
 
 from django.core.management.base import BaseCommand, CommandError
-from royale.models import Event, Task, EventParticipation, Client
+from royale.models import Event, Task, EventParticipation, Client, UserAction
 from datetime import *
 from django.utils import timezone
 import pytz
@@ -48,6 +48,31 @@ def event_end(event):
         client = Client.objects.get(eventparticipation__id=participant.id)
         client.points += (participant.total_completed + (.25 * participant.streak * participant.total_completed))
         client.save()
+        participant.save()
+
+
+def user_actions(event):
+    """
+    Goes through all the user actions for this event and does them
+
+    Order of ops:
+        1. Run through block actions to raise shield stat
+        2. Run through attack actions and increment appropriate damage_taken
+        3. Run through block actions again and reduce shield stat
+        4. Clear this events UserActions (This might happen after all events
+           have been run through
+
+    :param event: Current event we're looking at the actions of
+    :return: nothing
+    """
+
+    actions = UserAction.objects.all().filter(event=event.id)
+
+    # Run through block actions first
+    for action in actions.filter(action_type=2):
+        participant = EventParticipation.objects.get(id=action.performer_id)
+
+        participant.shield += .5
         participant.save()
 
 

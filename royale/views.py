@@ -12,9 +12,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from royale.models import Client, EventParticipation, Task, Event, Clazz
+from royale.models import Client, EventParticipation, Task, Event, Clazz, UserAction, UserActionTypes
 from royale.serializers import ClientSerializer, EventSerializer, TaskSerializer, UserSerializer, \
-    EventParticipationSerializer
+    EventParticipationSerializer, UserActionSerializer, UserActionTypesSerializer
 
 
 class AnonCreateAndUpdateOwnerOnly(permissions.BasePermission):
@@ -290,6 +290,40 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
         """
         qs = EventParticipation.objects.filter(client__user=request.user).order_by('-id')
         serializer = EventParticipationSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
+
+
+class UserActionViewSet(viewsets.ModelViewSet):
+    queryset = UserAction.objects.all()
+    serializer_class = UserActionSerializer
+    permission_classes = [AllowAny,]
+
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def all(self, request):
+        """
+        Returns All of a Users daily actions created regardless of event
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = UserAction.objects.filter(performer__user=request.user).order_by('-id')
+        serializer = UserActionSerializer(instance=qs, many=True)
+        return Response(JSONRenderer().render(serializer.data), content_type='json')
+
+
+class UserActionTypesViewSet(viewsets.ModelViewSet):
+    queryset = UserActionTypes.objects.all()
+    serializer_class = UserActionTypesSerializer
+    permission_classes = [AllowAny,]
+
+    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def all(self, request):
+        """
+        Returns all available User Action Types
+        :param request: The Django provided HTTP request from the User
+        :return: HTTP Response
+        """
+        qs = UserActionTypes.objects.all().order_by('-id')
+        serializer = UserActionTypesSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
 

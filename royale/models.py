@@ -15,9 +15,11 @@ class EventParticipation(models.Model):
     client = models.ForeignKey('Client', on_delete=models.CASCADE)
     health = models.IntegerField(default=100)
     energy = models.IntegerField(default=0)
-    shield = models.IntegerField(default=0)
+    shield = models.IntegerField(default=1)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     selected_class = models.ForeignKey('Clazz', default=1, on_delete=models.SET_DEFAULT)
+    damage_taken = models.IntegerField(default=0)
+    attack_damage = models.IntegerField(default=10)
     completed_tasks = models.ManyToManyField('Task', blank=True)
     completed_steps = models.ManyToManyField('TaskStep', blank=True)
     total_completed = models.IntegerField(default=0)
@@ -26,6 +28,11 @@ class EventParticipation(models.Model):
     @property
     def points(self):
         return self.total_completed + (.25 * self.streak * self.total_completed)
+
+    def save(self, *args, **kwargs):
+        self.health = Clazz.objects.get(pk=self.selected_class_id).health - self.damage_taken
+        self.attack_damage = Clazz.objects.get(pk=self.selected_class_id).damage
+        super(EventParticipation, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{str(self.client)} -> {str(self.event)}"
@@ -152,10 +159,28 @@ class UserAction(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    action_type = models.IntegerField(default=0)
-    performer = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='performer')
-    target = models.OneToOneField(Client, on_delete=models.CASCADE)
+    action_type = models.ForeignKey('UserActionTypes', default=1, on_delete=models.SET_DEFAULT)
+    performer = models.ForeignKey(EventParticipation, related_name='performer', on_delete=models.CASCADE, default=1)
+    target = models.ForeignKey(EventParticipation, on_delete=models.CASCADE, default=1, null=True)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{str(self.performer)} -({str(self.action_type)})-> {str(self.target)}"
+
+
+class UserActionTypes(models.Model):
+    """
+    Functions similar to Clazz, outline/storage for the different types of actions we are allowing
+
+    :var id will be used to identify which action the user wants to perform in daily_cleanup.py
+    :var action and description will be used GUI side to relay what the action does to the user
+    :var energy_cost is the energy cost duh...
+    """
+
+    id = models.AutoField(primary_key=True)
+    action = models.CharField(default='Attack', max_length=20)
+    description = models.CharField(max_length=100, default='')
+    energy_cost = models.IntegerField(default=1)
+
+    def __str__(self):
+        return self.action
