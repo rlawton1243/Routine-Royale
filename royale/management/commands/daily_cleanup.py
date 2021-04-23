@@ -29,7 +29,7 @@ Tasks fetched, skipping steps until later
 """
 
 from django.core.management.base import BaseCommand, CommandError
-from royale.models import Event, Task, EventParticipation, Client, UserAction
+from royale.models import Event, Task, EventParticipation, Client, UserAction, UserActionTypes
 from datetime import *
 from django.utils import timezone
 import pytz
@@ -72,17 +72,48 @@ def user_actions(event):
     for action in actions.filter(action_type=2):
         participant = EventParticipation.objects.get(id=action.performer_id)
 
-        participant.shield += .5
+        participant.shield += 0.5
+        participant.energy -= UserActionTypes.objects.get(id=2).energy_cost
         participant.save()
+        action.save()
+
+    for action in actions.filter(action_type=1):
+        attacker = EventParticipation.objects.get(id=action.performer_id)
+        target = EventParticipation.objects.get(id=action.target_id)
+
+        target.damage_taken += (attacker.attack_damage / target.shield)
+        attacker.energy -= UserActionTypes.objects.get(id=1).energy_cost
+        attacker.save()
+        target.save()
+        action.save()
+
+    for action in actions.filter(action_type=2):
+        participant = EventParticipation.objects.get(id=action.performer_id)
+        participant.shield -= 0.5
+        participant.save()
+        action.save()
+
+    event.save()
 
 
 class Command(BaseCommand):
+    """
+    This command performs all the once a day actions required in Routine-Royale
+
+    This includes:
+        Performing all UserActions created that day and then clearing that database
+        Checking task completion status and updating parameters streak, tasks_completed,
+        and energy accordingly
+
+    In production this will run on a cron job between 11:30pm and 11:59pm
+    """
     help = 'Performs the Daily Cleanup of Events and Assigns points to users'
 
     def handle(self, *args, **options):
         events = Event.objects.all()
 
         for event in events:
+            user_actions(event)
             print(event)
             today = timezone.now().replace(hour=23, minute=59)
             curr_weekday = datetime.today().weekday()
@@ -116,7 +147,7 @@ class Command(BaseCommand):
                 if task.schedule is None:
                     """
                     If Task does not have a schedule task will be deleted
-                    
+
                     However we are not doing this until later
                     """
 
@@ -166,3 +197,6 @@ class Command(BaseCommand):
             if event.end_date <= today:
                 event_end(event)
                 continue
+
+        # Clears UserActions Table
+        UserAction.objects.all().delete()
