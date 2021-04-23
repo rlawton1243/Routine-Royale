@@ -130,12 +130,17 @@ class Command(BaseCommand):
                 print(participant)
                 print(completed_today)
 
+                # Increment number of completed tasks for the entire event
                 participant.total_completed += len(list(completed_today))
 
+                # Increment event streak if all daily tasks were completed, otherwise set to 0
                 if set(completed_today) == set(tasks_due_today):
                     participant.streak += 1
                 else:
                     participant.streak = 0
+
+                # Update user's energy field with formula (1 * total_completed) * streak
+                participant.energy += ((1 * len(completed_today)) * participant.streak)
 
                 participant.completed_tasks.clear()
                 participant.save()
