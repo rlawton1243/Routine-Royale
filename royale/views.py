@@ -355,17 +355,6 @@ class UserActionTypesViewSet(viewsets.ModelViewSet):
     serializer_class = UserActionTypesSerializer
     permission_classes = [AllowAny,]
 
-    @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
-    def all(self, request):
-        """
-        Returns all available User Action Types
-        :param request: The Django provided HTTP request from the User
-        :return: HTTP Response
-        """
-        qs = UserActionTypes.objects.all().order_by('-id')
-        serializer = UserActionTypesSerializer(instance=qs, many=True)
-        return Response(JSONRenderer().render(serializer.data), content_type='json')
-
 
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.IsAuthenticated])
