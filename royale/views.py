@@ -309,6 +309,46 @@ class UserActionViewSet(viewsets.ModelViewSet):
         serializer = UserActionSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
+    @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
+    def take_action(self, request):
+        """
+        Creates an action with error checking
+        :param request: 
+        :return:
+        """
+        try:
+            client = Client.objects.filter(user=request.user.id)[0]
+            event = Event.objects.get(id=request.data['event'])
+            target = Client.objects.get(id=request.data['target'])
+            client_participations = EventParticipation.objects.filter(client=client, event=event)
+            target_participations = EventParticipation.objects.filter(client=target, event=event)
+
+            if len(client_participations) < 1:
+                return Response({'error': f'Client Participation does not exist for {client} in {event}.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if len(target_participations) < 1:
+                return Response({'error': f'Target Participation does not exist for {target} in {event}.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            client_participation = client_participations[0]
+            target_participation = target_participations[0]
+            action_type = UserActionTypes.objects.get(id=request.data['action_type'])
+
+            # Check if in Event already
+            existing = UserAction.objects.filter(performer=client_participation)
+            if len(existing) > 0:
+                return Response({"error": f"Action for today already exists! {existing}"},
+                                status=status.HTTP_409_CONFLICT)
+
+            req = UserAction(action_type=action_type, performer=client_participation,
+                             target=target_participation, event=event)
+            req.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
+
+        except Exception as e:
+            print(e)
+            return Response({"error": str(e)}, status=status.HTTP_406_NOT_ACCEPTABLE, content_type='json')  # TODO: Remove Debug
+
 
 class UserActionTypesViewSet(viewsets.ModelViewSet):
     queryset = UserActionTypes.objects.all()

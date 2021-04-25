@@ -30,6 +30,13 @@ class EventParticipation(models.Model):
         return self.total_completed + (.25 * self.streak * self.total_completed)
 
     def save(self, *args, **kwargs):
+        """
+        Overrides the default save model function to add class support and
+        health updating based on damage_taken
+        :param args:
+        :param kwargs:
+        :return: Nothing
+        """
         self.health = Clazz.objects.get(pk=self.selected_class_id).health - self.damage_taken
         self.attack_damage = Clazz.objects.get(pk=self.selected_class_id).damage
         super(EventParticipation, self).save(*args, **kwargs)
