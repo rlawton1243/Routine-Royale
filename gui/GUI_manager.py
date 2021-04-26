@@ -284,7 +284,7 @@ class EventDetails(Screen):
             num_listed += 1
             if num_listed <= 5 and user is not None:
                 top_content = Label(text=f'{num_listed}: {user["username"]};  {user["points"]} points;  '
-                                         f'{user["streak"]} streak',
+                                         f'{user["streak"]} streak;  {user["health"]} health',
                                     valign='center', halign='center')
                 layout.add_widget(top_content)
         dismiss_button = Button(text='Dismiss',
