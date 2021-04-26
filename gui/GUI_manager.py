@@ -294,7 +294,7 @@ class EventDetails(Screen):
         dd = DropDown()
 
         def _shield(instance):
-            partial(self.process_action, self.shared.nm.client['id'], 2)
+            self.process_action(self.shared.nm.client['id'], 2)
             actions_popup.dismiss()
             dd.dismiss()
 
@@ -316,7 +316,7 @@ class EventDetails(Screen):
                 continue
             else:
                 def _attack(instance):
-                    partial(self.process_action, participant['client'], 1)
+                    self.process_action(participant['client'], 1)
                     actions_popup.dismiss()
                     dd.dismiss()
 
@@ -334,7 +334,7 @@ class EventDetails(Screen):
         dismiss_button.bind(on_release=actions_popup.dismiss)
         actions_popup.open()
 
-    def process_action(self, target, action, instance):
+    def process_action(self, target, action):
         # Action 1 is attack, 2 is shield
         self.shared.nm.take_action(self.shared.event_id, target, action)
         return
