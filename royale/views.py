@@ -30,8 +30,7 @@ class AnonCreateAndUpdateOwnerOnly(permissions.BasePermission):
         return view.action == "create" or request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        return view.action in ['retrieve', 'update',
-                               'partial_update'] and obj.id == request.user.id or request.user.is_staff
+        return request.user and request.user.is_authenticated
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -279,7 +278,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class EventParticipationViewSet(viewsets.ModelViewSet):
     queryset = EventParticipation.objects.all()
     serializer_class = EventParticipationSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def all(self, request):
@@ -296,7 +295,7 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
 class UserActionViewSet(viewsets.ModelViewSet):
     queryset = UserAction.objects.all()
     serializer_class = UserActionSerializer
-    permission_classes = [AllowAny,]
+    permission_classes = [permissions.IsAuthenticated, ]
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def all(self, request):

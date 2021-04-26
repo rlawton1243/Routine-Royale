@@ -18,10 +18,11 @@ class ClazzSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     owned_classes = ClazzSerializer(many=True, required=False)
     email = serializers.CharField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Client
-        fields = ['id', 'user', 'email', 'points', 'description', 'owned_classes']
+        fields = ['id', 'user', 'username', 'email', 'points', 'description', 'owned_classes']
 
 
 class EventParticipationSerializer(serializers.ModelSerializer):
@@ -36,9 +37,10 @@ class EventParticipationSerializer(serializers.ModelSerializer):
 
 
 class SimpleEventParticipationSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='client.user.username', read_only=True)
     class Meta:
         model = EventParticipation
-        fields = ['id', 'client']
+        fields = ['id', 'client', 'username']
 
 
 class TaskScheduleSerializer(serializers.ModelSerializer):
