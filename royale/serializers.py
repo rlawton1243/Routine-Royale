@@ -2,7 +2,8 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, Clazz
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction,\
+    Clazz, UserActionTypes
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -49,6 +50,18 @@ class TaskStepSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskStep
         fields = ['id', 'name', 'description', 'task']
+
+
+class UserActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAction
+        fields = ['id', 'action_type', 'performer', 'target', 'event']
+
+
+class UserActionTypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserActionTypes
+        fields = ['id', 'action', 'description', 'energy_cost']
 
 
 class TaskSerializer(serializers.ModelSerializer):

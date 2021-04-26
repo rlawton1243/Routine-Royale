@@ -2,7 +2,7 @@ import json
 
 import requests
 import datetime
-from shared import Shared
+from gui.shared import Shared
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext
@@ -100,7 +100,12 @@ class NetworkManager:
         if response.status_code == 200:
             self.logged_in = True
             self.userID = response.json()['user']
-            self.shared.username = self.get(f'/users/{self.userID}', json_decode=True)['username']
+            user = self.get(f'/users/{self.userID}', json_decode=True)
+            self.shared.username = user['username']
+            self.shared.email = user['email']
+            client = self.get('/clients/logged_in/', json_decode=True)
+            self.shared.description = client['description']
+            self.shared.points = client['points']
         else:
             self.logged_in = False
             print(f"Error Logging in: {response.status_code} {response.content}")

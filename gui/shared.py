@@ -2,6 +2,9 @@ class Shared:
 
     def __init__(self):
         self.username = ''
+        self.points = 0
+        self.description = ''
+        self.email = ''
         self.req_event_title = ''
         self.req_event_tasks = []
         self.login = None

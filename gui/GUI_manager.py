@@ -221,6 +221,9 @@ class AccountInfo(Screen):
 
     def update_username(self):
         self.userField.text = self.shared.username
+        self.pointsField.text = str(self.shared.points)
+        self.emailField.text = self.shared.email
+        self.descriptionField.text = self.shared.description
 
 
 class UserEvents(Screen):
