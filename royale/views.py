@@ -337,8 +337,8 @@ class UserActionViewSet(viewsets.ModelViewSet):
             # Check if in Event already
             existing = UserAction.objects.filter(performer=client_participation)
             if len(existing) > 0:
-                return Response({"error": f"Action for today already exists! {existing}"},
-                                status=status.HTTP_409_CONFLICT)
+                print(f"Removing existing action for {client_participation}.")
+                existing.delete()
 
             req = UserAction(action_type=action_type, performer=client_participation,
                              target=target_participation, event=event)

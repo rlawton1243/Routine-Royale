@@ -17,6 +17,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import StringProperty
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.dropdown import DropDown
 
 
 def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
@@ -261,10 +262,10 @@ class EventDetails(Screen):
         self.add_widget(scroll_layout)
         self.add_widget(return_main)
         self.add_widget(display_top)
+        self.add_widget(actions)
 
     def display_top_users(self, instance):
         top_users = self.shared.nm.top_five(self.shared.event_id)
-        print(top_users)
         num_listed = 0
         layout = BoxLayout(orientation='vertical')
         for user in top_users[::-1]:

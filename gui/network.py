@@ -1,14 +1,14 @@
+import datetime
 import json
 
 import requests
-import datetime
+
 from gui.shared import Shared
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext
 
 
-# TODO: Finalize NetworkManager
 class NetworkManager:
 
     def __init__(self, shared: Shared):
