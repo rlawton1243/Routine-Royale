@@ -315,13 +315,13 @@ class EventDetails(Screen):
             if participant['client'] == self.shared.nm.client['id']:
                 continue
             else:
-                def _attack(instance):
+                def _attack(participant, instance):
                     self.process_action(participant['client'], 1)
                     actions_popup.dismiss()
                     dd.dismiss()
 
                 newbtn = Button(text=f'{participant["username"]}', size_hint=(None, None), size=(80, 40),
-                                on_release=_attack)
+                                on_release=partial(_attack, participant))
                 dd.add_widget(newbtn)
         attack = Button(text='Attack', size_hint=(None, None),
                         pos_hint={'center_x': 0.5, 'center_y': 0.5},
