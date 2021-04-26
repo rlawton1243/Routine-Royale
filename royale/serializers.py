@@ -2,10 +2,11 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction,\
-    Clazz, UserActionTypes
-from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, \
+    Clazz, UserActionTypes
 
 
 class ClazzSerializer(serializers.ModelSerializer):
