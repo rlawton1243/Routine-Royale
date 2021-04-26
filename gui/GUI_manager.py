@@ -136,6 +136,9 @@ class RoutineMain(Screen):
         self.events_popup.open()
 
     def switch_screen(self, event, instance):
+        for user in self.shared.nm.top_five(event['id']):
+            if user['username'] == self.shared.username:
+                self.shared.health_amount_label.text = str(user['health'])
         self.events_popup.dismiss()
         self.shared.req_event_title = event['name']
         self.shared.event_name_label.text = event['name']
@@ -203,7 +206,7 @@ class RoutineMain(Screen):
         inside_scroll.add_widget(dismiss_button)
         scroll_layout.add_widget(inside_scroll)
         outside_scroll.add_widget(scroll_layout)
-        events_popup = Popup(title='Public Events', title_align='center',
+        events_popup = Popup(title='User Events', title_align='center',
                              content=outside_scroll,
                              size_hint=(None, None), size=(600, 500),
                              auto_dismiss=False)
@@ -239,16 +242,22 @@ class EventDetails(Screen):
         super(EventDetails, self).__init__(**kwargs)
         self.completed_tasks = []
         self.top_users_popup = None
-
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435),
                                    pos_hint={'center_x': 0.55, 'center_y': 0.55})
         self.inside_scroll = GridLayout(cols=2, size_hint_y=None, spacing=20)
         self.inside_scroll.bind(minimum_height=self.inside_scroll.setter('height'))
+        health_label = Label(text='Current Health:', size_hint=(None, None), size=(250, 40),
+                             pos_hint={'center_x': 0.25, 'top': 0.1})
+        health_amount = Label(size_hint=(None, None), size=(550, 40),
+                              pos_hint={'center_x': 0.25, 'top': 0.1})
         event_name_label = Label(text='Event title:', size_hint=(None, None), size=(250, 40),
                                  pos_hint={'center_x': 0.25, 'top': 0.1})
-        event_name = Label(text=self.shared.req_event_title, size_hint=(None, None), size=(550, 40),
+        event_name = Label(size_hint=(None, None), size=(550, 40),
                            pos_hint={'center_x': 0.25, 'top': 0.1})
+        shared.health_amount_label = health_amount
         shared.event_name_label = event_name
+        self.inside_scroll.add_widget(health_label)
+        self.inside_scroll.add_widget(health_amount)
         self.inside_scroll.add_widget(event_name_label)
         self.inside_scroll.add_widget(event_name)
         shared.event_details_scroll = self.inside_scroll
