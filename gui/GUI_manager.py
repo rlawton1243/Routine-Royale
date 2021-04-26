@@ -17,6 +17,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import StringProperty
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.dropdown import DropDown
 
 
 def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
@@ -251,20 +252,23 @@ class EventDetails(Screen):
         self.inside_scroll.add_widget(event_name_label)
         self.inside_scroll.add_widget(event_name)
         shared.event_details_scroll = self.inside_scroll
-        return_main = Button(text='Return to Main Menu',
-                             size_hint=(0.3, 0.1), pos_hint={"center_x": 0.3, "top": 0.1},
+        return_main = Button(text='Main Menu',
+                             size_hint=(0.15, 0.1), pos_hint={"center_x": 0.3, "top": 0.1},
                              on_release=self.switch_screen)
-        display_top = Button(text='Display top 5',
-                             size_hint=(0.3, 0.1), pos_hint={"center_x": 0.7, "top": 0.1},
+        display_top = Button(text='Top 5',
+                             size_hint=(0.15, 0.1), pos_hint={"center_x": 0.5, "top": 0.1},
                              on_release=self.display_top_users)
+        actions = Button(text='Actions',
+                         size_hint=(0.15, 0.1), pos_hint={"center_x": 0.7, "top": 0.1},
+                         on_release=self.display_actions)
         scroll_layout.add_widget(self.inside_scroll)
         self.add_widget(scroll_layout)
         self.add_widget(return_main)
         self.add_widget(display_top)
+        self.add_widget(actions)
 
     def display_top_users(self, instance):
         top_users = self.shared.nm.top_five(self.shared.event_id)
-        print(top_users)
         num_listed = 0
         layout = BoxLayout(orientation='vertical')
         for user in top_users[::-1]:
@@ -284,6 +288,55 @@ class EventDetails(Screen):
                                      auto_dismiss=False)
         dismiss_button.bind(on_release=self.top_users_popup.dismiss)
         self.top_users_popup.open()
+        return
+
+    def display_actions(self, instance):
+        dd = DropDown()
+
+        def _shield(instance):
+            partial(self.process_action, self.shared.nm.client['id'], 2)
+            actions_popup.dismiss()
+            dd.dismiss()
+
+        scroll_layout = ScrollView(size_hint=(1, None), size=(600, 400))
+        outside_scroll = GridLayout(rows=2, pos_hint={'center_x': 0.5, 'center_y': 0.5})
+        inside_scroll = GridLayout(cols=2, size_hint_y=None, spacing=20)
+        inside_scroll.bind(minimum_height=inside_scroll.setter('height'))
+        dismiss_button = Button(text='Dismiss', size_hint=(None, None), size=(80, 40),
+                                pos_hint={'center_x': 0.5, 'center_y': 0.5})
+        actions_popup = Popup(title='Actions', title_align='center',
+                              content=outside_scroll,
+                              size_hint=(None, None), size=(600, 500),
+                              auto_dismiss=False)
+        shield = Button(text='Shield', size_hint=(None, None),
+                        pos_hint={'center_x': 0.5, 'center_y': 0.5},
+                        on_release=_shield)
+        for participant in self.shared.nm.get_event(self.shared.event_id)['participants']:
+            if participant['client'] == self.shared.nm.client['id']:
+                continue
+            else:
+                def _attack(instance):
+                    partial(self.process_action, participant['client'], 1)
+                    actions_popup.dismiss()
+                    dd.dismiss()
+
+                newbtn = Button(text=f'{participant["username"]}', size_hint=(None, None), size=(80, 40),
+                                on_release=_attack)
+                dd.add_widget(newbtn)
+        attack = Button(text='Attack', size_hint=(None, None),
+                        pos_hint={'center_x': 0.5, 'center_y': 0.5},
+                        on_release=dd.open)
+        inside_scroll.add_widget(shield)
+        inside_scroll.add_widget(attack)
+        scroll_layout.add_widget(inside_scroll)
+        outside_scroll.add_widget(scroll_layout)
+        outside_scroll.add_widget(dismiss_button)
+        dismiss_button.bind(on_release=actions_popup.dismiss)
+        actions_popup.open()
+
+    def process_action(self, target, action, instance):
+        # Action 1 is attack, 2 is shield
+        self.shared.nm.take_action(self.shared.event_id, target, action)
         return
 
     def switch_screen(self, instance):

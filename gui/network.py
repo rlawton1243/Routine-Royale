@@ -1,20 +1,21 @@
+import datetime
 import json
 
 import requests
-import datetime
+
 from gui.shared import Shared
 
 SERVICE_URL = 'http://127.0.0.1:8000'
 _url = lambda ext: SERVICE_URL + ext
 
 
-# TODO: Finalize NetworkManager
 class NetworkManager:
 
     def __init__(self, shared: Shared):
         self.s = requests.Session()
         self.logged_in = False
         self.userID = None
+        self.client = None
         self.shared = shared
 
     @property
@@ -104,6 +105,7 @@ class NetworkManager:
             self.shared.username = user['username']
             self.shared.email = user['email']
             client = self.get('/clients/logged_in/', json_decode=True)
+            self.client = client
             self.shared.description = client['description']
             self.shared.points = client['points']
         else:
@@ -267,3 +269,38 @@ class NetworkManager:
         if response.status_code > 299:
             print(response.content)
         return json.loads(response.content)
+
+    def get_event(self, event):
+        """
+        Gets Event details.
+        :param event: Event PK
+        :return: Dict
+        """
+        event_pk = int(event)
+        return self.get(f'/events/{event_pk}/', json_decode=True)
+
+    def take_action(self, event, target, action):
+        """
+        Takes Action to Target in part of Event.
+        :param event: Event PK
+        :param target: Target Client PK
+        :param action: Action PK
+        :return: Dict
+        """
+        event_pk = int(event)
+        target_pk = int(target)
+        action_pk = int(action)
+
+        payload = {
+            'event': event_pk,
+            'target': target_pk,
+            'action_type': action_pk,
+        }
+        response = self.post('/useraction/take_action/', payload)
+        if response.status_code == 409:
+            return False
+        elif response.status_code > 299:
+            print(response.content)
+            return False
+        else:
+            return True

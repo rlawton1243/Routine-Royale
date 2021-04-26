@@ -29,7 +29,7 @@ Tasks fetched, skipping steps until later
 """
 
 from django.core.management.base import BaseCommand, CommandError
-from royale.models import Event, Task, EventParticipation, Client
+from royale.models import Event, Task, EventParticipation, Client, UserAction, UserActionTypes
 from datetime import *
 from django.utils import timezone
 import pytz
@@ -51,13 +51,69 @@ def event_end(event):
         participant.save()
 
 
+def user_actions(event):
+    """
+    Goes through all the user actions for this event and does them
+
+    Order of ops:
+        1. Run through block actions to raise shield stat
+        2. Run through attack actions and increment appropriate damage_taken
+        3. Run through block actions again and reduce shield stat
+        4. Clear this events UserActions (This might happen after all events
+           have been run through
+
+    :param event: Current event we're looking at the actions of
+    :return: nothing
+    """
+
+    actions = UserAction.objects.all().filter(event=event.id)
+
+    # Run through block actions first
+    for action in actions.filter(action_type=2):
+        participant = EventParticipation.objects.get(id=action.performer_id)
+
+        participant.shield += 0.5
+        participant.energy -= UserActionTypes.objects.get(id=2).energy_cost
+        participant.save()
+        action.save()
+
+    for action in actions.filter(action_type=1):
+        attacker = EventParticipation.objects.get(id=action.performer_id)
+        target = EventParticipation.objects.get(id=action.target_id)
+
+        target.damage_taken += (attacker.attack_damage / target.shield)
+        attacker.energy -= UserActionTypes.objects.get(id=1).energy_cost
+        attacker.save()
+        target.save()
+        action.save()
+
+    for action in actions.filter(action_type=2):
+        participant = EventParticipation.objects.get(id=action.performer_id)
+        participant.shield -= 0.5
+        participant.save()
+        action.save()
+
+    event.save()
+
+
 class Command(BaseCommand):
+    """
+    This command performs all the once a day actions required in Routine-Royale
+
+    This includes:
+        Performing all UserActions created that day and then clearing that database
+        Checking task completion status and updating parameters streak, tasks_completed,
+        and energy accordingly
+
+    In production this will run on a cron job between 11:30pm and 11:59pm
+    """
     help = 'Performs the Daily Cleanup of Events and Assigns points to users'
 
     def handle(self, *args, **options):
         events = Event.objects.all()
 
         for event in events:
+            user_actions(event)
             print(event)
             today = timezone.now().replace(hour=23, minute=59)
             curr_weekday = datetime.today().weekday()
@@ -74,12 +130,17 @@ class Command(BaseCommand):
                 print(participant)
                 print(completed_today)
 
+                # Increment number of completed tasks for the entire event
                 participant.total_completed += len(list(completed_today))
 
+                # Increment event streak if all daily tasks were completed, otherwise set to 0
                 if set(completed_today) == set(tasks_due_today):
                     participant.streak += 1
                 else:
                     participant.streak = 0
+
+                # Update user's energy field with formula (1 * total_completed) * streak
+                participant.energy += ((1 * len(completed_today)) * participant.streak)
 
                 participant.completed_tasks.clear()
                 participant.save()
@@ -91,7 +152,7 @@ class Command(BaseCommand):
                 if task.schedule is None:
                     """
                     If Task does not have a schedule task will be deleted
-                    
+
                     However we are not doing this until later
                     """
 
@@ -141,3 +202,6 @@ class Command(BaseCommand):
             if event.end_date <= today:
                 event_end(event)
                 continue
+
+        # Clears UserActions Table
+        UserAction.objects.all().delete()

@@ -2,9 +2,11 @@
 Select relevant fields to serialize our objects.
 """
 
-from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, Clazz
-from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+
+from royale.models import Client, EventParticipation, TaskSchedule, TaskStep, Task, Event, UserAction, \
+    Clazz, UserActionTypes
 
 
 class ClazzSerializer(serializers.ModelSerializer):
@@ -16,10 +18,11 @@ class ClazzSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     owned_classes = ClazzSerializer(many=True, required=False)
     email = serializers.CharField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Client
-        fields = ['id', 'user', 'email', 'points', 'description', 'owned_classes']
+        fields = ['id', 'user', 'username', 'email', 'points', 'description', 'owned_classes']
 
 
 class EventParticipationSerializer(serializers.ModelSerializer):
@@ -34,9 +37,10 @@ class EventParticipationSerializer(serializers.ModelSerializer):
 
 
 class SimpleEventParticipationSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='client.user.username', read_only=True)
     class Meta:
         model = EventParticipation
-        fields = ['id', 'client']
+        fields = ['id', 'client', 'username']
 
 
 class TaskScheduleSerializer(serializers.ModelSerializer):
@@ -49,6 +53,18 @@ class TaskStepSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskStep
         fields = ['id', 'name', 'description', 'task']
+
+
+class UserActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAction
+        fields = ['id', 'action_type', 'performer', 'target', 'event']
+
+
+class UserActionTypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserActionTypes
+        fields = ['id', 'action', 'description', 'energy_cost']
 
 
 class TaskSerializer(serializers.ModelSerializer):

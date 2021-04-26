@@ -10,6 +10,8 @@ router.register(r'tasks', views.TaskViewSet)
 router.register(r'users', views.UserViewSet)
 #router.register(r'test', views.join_event)
 router.register(r'participations', views.EventParticipationViewSet)
+router.register(r'useraction', views.UserActionViewSet)
+router.register(r'useractiontypes', views.UserActionTypesViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
