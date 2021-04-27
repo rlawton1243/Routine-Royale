@@ -27,9 +27,22 @@ class AnonCreateAndUpdateOwnerOnly(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
+        """
+        Has permission, generally
+        :param request: HTTP request object
+        :param view: View that was requested
+        :return: bool has permission
+        """
         return view.action == "create" or request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
+        """
+        Has permission to access and modify object
+        :param obj: Object requested
+        :param request: HTTP request object
+        :param view: View that was requested
+        :return: bool has permission
+        """
         return request.user and request.user.is_authenticated
 
 
@@ -114,12 +127,22 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def public(self, request):
+        """
+        Gets all public Events.
+        :param request: HTTP request object
+        :return: HTTP Response
+        """
         qs = Event.objects.filter(is_public=True).order_by('-id')
         serializer = EventSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
     @action(methods=['POST'], detail=False, renderer_classes=[renderers.StaticHTMLRenderer])
     def join_user(self, request):
+        """
+        Joins the logged in user to the Event, passed as POST param.
+        :param request: HTTP request object
+        :return: HTTP Response
+        """
         try:
             client = Client.objects.filter(user=request.user.id)[0]
             event = Event.objects.get(id=request.data['event'])
@@ -274,12 +297,18 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Default API ViewSet for a User
+    """
     queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
     permission_classes = [AnonCreateAndUpdateOwnerOnly, ]
 
 
 class EventParticipationViewSet(viewsets.ModelViewSet):
+    """
+    API Endpoint for EventParticipation
+    """
     queryset = EventParticipation.objects.all()
     serializer_class = EventParticipationSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -297,6 +326,9 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
 
 
 class UserActionViewSet(viewsets.ModelViewSet):
+    """
+    API Endpoint for UserAction
+    """
     queryset = UserAction.objects.all()
     serializer_class = UserActionSerializer
     permission_classes = [permissions.IsAuthenticated, ]
@@ -354,16 +386,19 @@ class UserActionViewSet(viewsets.ModelViewSet):
 
 
 class UserActionTypesViewSet(viewsets.ModelViewSet):
+    """
+    API Endpoint for User Action Types
+    """
     queryset = UserActionTypes.objects.all()
     serializer_class = UserActionTypesSerializer
-    permission_classes = [AllowAny,]
+    permission_classes = [AllowAny, ]
 
 
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.IsAuthenticated])
 def test_login(request):
     """
-    Creates EventParticipation based on Authenticated User and Provided Details
+    Tests that the requesting user is logged in. Responses can be checked.
     """
     if request.method == "GET":
         return Response({
