@@ -21,6 +21,13 @@ from kivy.uix.dropdown import DropDown
 
 
 def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
+    """
+    Popup skeleton for informational popups
+    :param popup_label: Content of the popup
+    :param popup_title: Title shown on the popup
+    :param close_button_label: Whether it's submit or dismiss
+    :return: None
+    """
     layout = BoxLayout(orientation='vertical')
     popup_content = Label(text=f'{popup_label}',
                           valign='center', halign='center')
@@ -38,6 +45,11 @@ def popup_widget(popup_label, popup_title, close_button_label='Dismiss'):
 
 
 def get_all_events(shared):
+    """
+    Fetch all events in the database, used to find private events or list all public events
+    :param shared: shared.py file that is used to pass variables between classes
+    :return: None
+    """
     events = shared.nm.get('/events/', True)
     event_results = events['results']
     curr_page = 1
@@ -50,12 +62,21 @@ def get_all_events(shared):
 
 
 class RoutineLogin(Screen):
+    """
+    Displays the login screen, found in RoutineHome.kv
+    """
 
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
 
     def LoginAccount(self, userInput, password):
+        """
+        Logs into the server with the provided credentials, and checks if valid
+        :param userInput: Username input
+        :param password: Password input
+        :return logged_in: bool that tells the GUI if it was a successful login
+        """
         logged_in = self.shared.nm.login(userInput, password)
         if not logged_in:
             popup_widget('Invalid credentials, try again.', 'Login failed')
@@ -63,12 +84,22 @@ class RoutineLogin(Screen):
 
 
 class RoutineCreate(Screen):
+    """
+    Displays the account creation screen, found in RoutineHome.kv
+    """
 
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
 
     def CreateAccount(self, username, password):
+        """
+        Tries to create an account, if it errors off then the account
+        already exists and it lets the user try again
+        :param username: Username input
+        :param password: Password input
+        :return: None
+        """
         userID = None
         try:
             userID = self.shared.nm.add_user(username, password)
@@ -80,6 +111,10 @@ class RoutineCreate(Screen):
 
 
 class RoutineMain(Screen):
+    """
+    The main page in the GUI, includes all links that pass to other pages
+    """
+
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
@@ -88,6 +123,10 @@ class RoutineMain(Screen):
         self.events_popup = None
 
     def list_user_events(self):
+        """
+        Displays all the events a user is in in a popup
+        :return: None
+        """
         events = self.shared.nm.get('/events/all/', True)
         unique_events = []
         for event in events:
@@ -136,6 +175,15 @@ class RoutineMain(Screen):
         self.events_popup.open()
 
     def switch_screen(self, event, instance):
+        """
+        Switches to the event details screen
+        :param event: Details of event trying to be viewed
+        :param instance: Instance of button used
+        :return: None
+        """
+        for user in self.shared.nm.top_five(event['id']):
+            if user['username'] == self.shared.username:
+                self.shared.health_amount_label.text = str(user['health'])
         self.events_popup.dismiss()
         self.shared.req_event_title = event['name']
         self.shared.event_name_label.text = event['name']
@@ -168,6 +216,10 @@ class RoutineMain(Screen):
         self.manager.current = 'eventDetails'
 
     def list_public_events(self):
+        """
+        Lists all public events in the database that the player can join
+        :return: None
+        """
         event_results = get_all_events(self.shared)
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435))
         outside_scroll = GridLayout(rows=2, pos_hint={'center_x': 0.5, 'center_y': 0.5})
@@ -203,7 +255,7 @@ class RoutineMain(Screen):
         inside_scroll.add_widget(dismiss_button)
         scroll_layout.add_widget(inside_scroll)
         outside_scroll.add_widget(scroll_layout)
-        events_popup = Popup(title='Public Events', title_align='center',
+        events_popup = Popup(title='User Events', title_align='center',
                              content=outside_scroll,
                              size_hint=(None, None), size=(600, 500),
                              auto_dismiss=False)
@@ -211,16 +263,30 @@ class RoutineMain(Screen):
         events_popup.open()
 
     def join_public_event(self, event, instance, classID=1):
+        """
+        Joins a public event chosen
+        :param event: ID of the event chosen
+        :param instance: Instance of the button pressed
+        :param classID: Class to be used, based on ID, default is 1
+        :return: None
+        """
         self.shared.nm.join_event(event, classID)
 
 
 class AccountInfo(Screen):
+    """
+    Displays the user information
+    """
 
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
 
     def update_username(self):
+        """
+        Updates all user information once they log in
+        :return: None
+        """
         self.userField.text = self.shared.username
         self.pointsField.text = str(self.shared.points)
         self.emailField.text = self.shared.email
@@ -228,27 +294,48 @@ class AccountInfo(Screen):
 
 
 class UserEvents(Screen):
+    """
+    Initializes the user events screen
+    """
+
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
 
 
 class EventDetails(Screen):
+    """
+    Lists the details of the events chosen
+    """
+
     def __init__(self, shared: Shared, **kwargs):
+        """
+        Populates the window with information about the event you are in,
+        including health, the event name, the tasks you must perform,
+        the top 5 players, and a menu for actions.
+        :param shared: shared.py for class variable sharing
+        :param kwargs: keyword arguments
+        """
         self.shared = shared
         super(EventDetails, self).__init__(**kwargs)
         self.completed_tasks = []
         self.top_users_popup = None
-
         scroll_layout = ScrollView(size_hint=(1, None), size=(600, 435),
                                    pos_hint={'center_x': 0.55, 'center_y': 0.55})
         self.inside_scroll = GridLayout(cols=2, size_hint_y=None, spacing=20)
         self.inside_scroll.bind(minimum_height=self.inside_scroll.setter('height'))
+        health_label = Label(text='Current Health:', size_hint=(None, None), size=(250, 40),
+                             pos_hint={'center_x': 0.25, 'top': 0.1})
+        health_amount = Label(size_hint=(None, None), size=(550, 40),
+                              pos_hint={'center_x': 0.25, 'top': 0.1})
         event_name_label = Label(text='Event title:', size_hint=(None, None), size=(250, 40),
                                  pos_hint={'center_x': 0.25, 'top': 0.1})
-        event_name = Label(text=self.shared.req_event_title, size_hint=(None, None), size=(550, 40),
+        event_name = Label(size_hint=(None, None), size=(550, 40),
                            pos_hint={'center_x': 0.25, 'top': 0.1})
+        shared.health_amount_label = health_amount
         shared.event_name_label = event_name
+        self.inside_scroll.add_widget(health_label)
+        self.inside_scroll.add_widget(health_amount)
         self.inside_scroll.add_widget(event_name_label)
         self.inside_scroll.add_widget(event_name)
         shared.event_details_scroll = self.inside_scroll
@@ -268,6 +355,11 @@ class EventDetails(Screen):
         self.add_widget(actions)
 
     def display_top_users(self, instance):
+        """
+        Called to display the top 5 in a popup window
+        :param instance: instance of button pressed
+        :return: None
+        """
         top_users = self.shared.nm.top_five(self.shared.event_id)
         num_listed = 0
         layout = BoxLayout(orientation='vertical')
@@ -275,7 +367,7 @@ class EventDetails(Screen):
             num_listed += 1
             if num_listed <= 5 and user is not None:
                 top_content = Label(text=f'{num_listed}: {user["username"]};  {user["points"]} points;  '
-                                         f'{user["streak"]} streak',
+                                         f'{user["streak"]} streak;  {user["health"]} health',
                                     valign='center', halign='center')
                 layout.add_widget(top_content)
         dismiss_button = Button(text='Dismiss',
@@ -291,6 +383,11 @@ class EventDetails(Screen):
         return
 
     def display_actions(self, instance):
+        """
+        Displays the actions that the user can take for the day, shield or attack
+        :param instance: instance of the button pressed
+        :return: None
+        """
         dd = DropDown()
 
         def _shield(instance):
@@ -335,11 +432,21 @@ class EventDetails(Screen):
         actions_popup.open()
 
     def process_action(self, target, action):
+        """
+        Processes the action that the user wants to perform, can be changed multiple times
+        :param target: Who the action is being performed on
+        :param action: What that action is
+        :return: None
+        """
         # Action 1 is attack, 2 is shield
         self.shared.nm.take_action(self.shared.event_id, target, action)
-        return
 
     def switch_screen(self, instance):
+        """
+        Processes which checkboxes should stay checked off when switching between screens
+        :param instance: instance of the button pressed
+        :return: None
+        """
         self.manager.transition.direction = 'up'
         self.manager.current = 'main'
 
@@ -356,7 +463,16 @@ class EventDetails(Screen):
 
 
 class EventCreation(Screen):
+    """
+    Window that allows the user to create an event
+    """
+
     def __init__(self, shared: Shared, **kwargs):
+        """
+        Initializes the event creation window
+        :param shared: shared.py for shared class variables
+        :param kwargs: keyword arguments
+        """
         self.shared = shared
         super(EventCreation, self).__init__(**kwargs)
         self.tasks_info = []
@@ -402,10 +518,18 @@ class EventCreation(Screen):
         self.add_widget(layout)
 
     def submit_event(self, title_input, is_public_in, date_input, instance):
+        """
+        Submit the event for creation in the database
+        :param title_input: Title that the user provided
+        :param is_public_in: Whether or not the event is public or private
+        :param date_input: End date for the event
+        :param instance: instance of the button pressed
+        :return: None
+        """
         is_public = True
         if is_public_in.state != 'normal':
             is_public = False
-        event_info = self.shared.nm.create_event(title_input.text, is_public)
+        event_info = self.shared.nm.create_event(title_input.text, is_public, date_input.text)
         for desc in self.tasks_info:
             name = desc.text
             self.shared.nm.create_task(name, event_info['id'])
@@ -415,6 +539,11 @@ class EventCreation(Screen):
         self.manager.current = 'main'
 
     def add_task_box(self, instance):
+        """
+        Adds a new task option each time it is pressed
+        :param instance: instance of the button pressed
+        :return: None
+        """
         task_label = Label(text='Enter task description:', size_hint=(None, None), size=(250, 40),
                            pos_hint={'center_x': 0.25, 'top': 0.1})
         task_desc = TextInput(size_hint=(None, None), size=(400, 40))
@@ -424,23 +553,41 @@ class EventCreation(Screen):
         self.inside_scroll.add_widget(task_desc)
 
     def switch_screen(self, instance):
+        """
+        Switches back to the main menu
+        :param instance: instance of the button pressed
+        :return: None
+        """
         self.manager.transition.direction = 'left'
         self.manager.current = 'main'
 
 
 class PublicEventSearch(Screen):
+    """
+    Initializes the public event list in RoutineHome.kv
+    """
+
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         Screen.__init__(self, **kwargs)
 
 
 class PrivateEventSearch(Screen):
+    """
+    Allows the user to search for a private event via a key
+    """
+
     def __init__(self, shared: Shared, **kwargs):
         self.shared = shared
         self.password = StringProperty('')
         Screen.__init__(self, **kwargs)
 
     def find_private_event(self, event_id):
+        """
+        Processes searching for the event with the given id
+        :param event_id: ID of the event the user is trying to find
+        :return: None
+        """
         event_found = False
         event_results = get_all_events(self.shared)
         try:
@@ -474,10 +621,21 @@ class PrivateEventSearch(Screen):
             popup_widget('Make sure you enter an event ID\nand try again.', 'No ID entered')
 
     def join_private_event(self, event, password, instance, classID='1'):
+        """
+        Joins the event if the password is correct, otherwise errors off
+        :param event: Event the player is trying to join
+        :param password: Password of the event
+        :param instance: instance of button pressed
+        :param classID: Class the user is using in the event
+        :return:
+        """
         self.shared.nm.join_event(event, classID, password.text)
 
 
 class RoutineHome(App):
+    """
+    Initializes the framework of the GUI
+    """
 
     def __init__(self, **kwargs):
         App.__init__(self)
@@ -486,6 +644,10 @@ class RoutineHome(App):
         self.shared.nm = NetworkManager(self.shared)
 
     def build(self):
+        """
+        Builds the screen manager for the GUI, and assigns them into the shared.py for easy variable sharing
+        :return:
+        """
         self.title = 'Routine Royale'
         sm = ScreenManager()
         widgets = [
