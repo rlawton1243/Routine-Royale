@@ -51,7 +51,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             try:
                 user = request.user
-                user.set_password(request['password'])
+                user.set_password(request.data['password'])
                 user.save()
                 return Response(status=status.HTTP_202_ACCEPTED)
             except Exception as e:
