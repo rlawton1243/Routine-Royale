@@ -414,7 +414,7 @@ class EventCreation(Screen):
         is_public = True
         if is_public_in.state != 'normal':
             is_public = False
-        event_info = self.shared.nm.create_event(title_input.text, is_public)
+        event_info = self.shared.nm.create_event(title_input.text, is_public, date_input.text)
         for desc in self.tasks_info:
             name = desc.text
             self.shared.nm.create_task(name, event_info['id'])

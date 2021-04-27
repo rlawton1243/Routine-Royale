@@ -201,6 +201,7 @@ class NetworkManager:
         all = self.post('/tasks/all_event/', payload, json_decode=True)
         incomplete = self.post('/tasks/remaining_event/', payload, json_decode=True)
         complete = []
+        print(complete)
         for task in all:
             found = False
             for inc in incomplete:
