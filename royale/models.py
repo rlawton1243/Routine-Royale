@@ -27,6 +27,10 @@ class EventParticipation(models.Model):
 
     @property
     def points(self):
+        """
+        Calculates points based on current task completion and streak.
+        :return: float points
+        """
         return self.total_completed + (.25 * self.streak * self.total_completed)
 
     def save(self, *args, **kwargs):
@@ -35,7 +39,7 @@ class EventParticipation(models.Model):
         health updating based on damage_taken
         :param args:
         :param kwargs:
-        :return: Nothing
+        :return: None
         """
         self.health = Clazz.objects.get(pk=self.selected_class_id).health - self.damage_taken
         self.attack_damage = Clazz.objects.get(pk=self.selected_class_id).damage
@@ -126,16 +130,34 @@ class Event(models.Model):
 
     @property
     def event_max_points(self):
+        """
+        Maximum number of points achievable in an event
+        :return: float max points
+        """
         return Event.objects.get(pk=self.id).eventparticipation_set.all().count() * constants.POINTS_SCALE
 
     @property
     def event_key(self):
+        """
+        Finds a random key for the private event.
+        :return: str Random Key
+        """
         return f'{self.id}-{self.random_seed}'
 
     def create_rando(self):
+        """
+        Creates random seed for a component of the event key.
+        :return: int random
+        """
         self.random_seed = random.randrange(100000, 999999)
 
     def save(self, *args, **kwargs):
+        """
+        Overrides save to include random key
+        :param args:
+        :param kwargs:
+        :return: None
+        """
         self.create_rando()
         super(Event, self).save(*args, **kwargs)
 

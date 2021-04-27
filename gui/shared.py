@@ -2,6 +2,7 @@ class Shared:
 
     def __init__(self):
         self.username = ''
+        self.user_health = 0
         self.points = 0
         self.description = ''
         self.email = ''
@@ -19,6 +20,7 @@ class Shared:
         self.app = None
         self.sm = None
         self.nm = None
+        self.health_amount_label = None
         self.event_name_label = None
         self.event_id = None
         self.event_details_scroll = None

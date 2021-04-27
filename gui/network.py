@@ -201,6 +201,7 @@ class NetworkManager:
         all = self.post('/tasks/all_event/', payload, json_decode=True)
         incomplete = self.post('/tasks/remaining_event/', payload, json_decode=True)
         complete = []
+        print(complete)
         for task in all:
             found = False
             for inc in incomplete:
@@ -241,12 +242,16 @@ class NetworkManager:
         if response.status_code > 299:
             print(response.content)
 
-    def create_event(self, name, is_public=True):
+    def create_event(self, name, is_public=True, end_date=None):
         assert self.logged_in, "Log in to create an event."
         payload = {
-            'name': name,
-            'is_public': is_public
+                'name':      name,
+                'is_public': is_public
         }
+        if end_date is not None:
+            end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            payload['end_date'] = str(end_date)
         response = self.post('/events/', payload)
         if response.status_code > 299:
             print(response.content)
