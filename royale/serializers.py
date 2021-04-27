@@ -94,10 +94,11 @@ class TaskSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     participants = SimpleEventParticipationSerializer(source='eventparticipation_set', many=True, read_only=True)
     task_list = TaskSerializer(source='task_set', many=True, read_only=True)
+    event_key = serializers.CharField(read_only=True)
 
     class Meta:
         model = Event
-        fields = ['id', 'name', 'is_public', 'owner', 'end_date', 'participants', 'task_list']
+        fields = ['id', 'name', 'is_public', 'owner', 'end_date', 'participants', 'task_list', 'event_key']
 
 
 class UserSerializer(serializers.ModelSerializer):

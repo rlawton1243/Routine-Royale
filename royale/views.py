@@ -51,7 +51,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             try:
                 user = request.user
-                user.set_password(request['password'])
+                user.set_password(request.data['password'])
                 user.save()
                 return Response(status=status.HTTP_202_ACCEPTED)
             except Exception as e:
@@ -210,9 +210,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         :param request: The Django provided HTTP request from the User
         :return: HTTP Response
         """
+        ep = EventParticipation.objects.filter(client__user=request.user)
+        ep = ep.filter(event=request.data['event'])[0]
+        completed = ep.completed_tasks.values_list('pk', flat=True)
         qs = Task.objects.filter(event=request.data['event'])
-        qs = qs.filter(event__eventparticipation__client__user=request.user).order_by('-id')
-        qs = qs.filter(~Q(eventparticipation__completed_tasks__in=qs))
+        # qs = qs.filter(event__eventparticipation__id=ep.id).order_by('-id')
+        qs = qs.exclude(pk__in=completed)
+        # qs = qs.filter(~Q(eventparticipation__completed_tasks__in=qs))
         serializer = TaskSerializer(instance=qs, many=True)
         return Response(JSONRenderer().render(serializer.data), content_type='json')
 
